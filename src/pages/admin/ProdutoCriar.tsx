@@ -135,58 +135,63 @@ export default function ProdutoCriar() {
   };
 
   const generatePrompt = () => {
-    const prompt = `# INSTRUÇÕES PARA CRIAÇÃO DE EXPERIÊNCIA DEVOCIONAL
+    const prompt = `Olá! Preciso que você me ajude a criar uma experiência devocional completa.
 
-Você é um especialista em criar experiências devocionais cristãs transformadoras. Eu preciso que você crie uma experiência completa baseada nos seguintes dados:
-
-**PRODUTO:**
+**INFORMAÇÕES DO PRODUTO:**
 - Título: ${productData.title}
 - Descrição: ${productData.description}
 - Categoria: ${productData.category}
 
 **INSTRUÇÕES:**
-1. Crie uma experiência devocional de quantos dias achar apropriado (mínimo 7, máximo 30)
-2. Cada dia deve conter:
-   - Devocional (texto inspirador de 200-300 palavras)
-   - Passagem bíblica relevante 
-   - Quiz reflexivo (3-5 perguntas)
-   - Oração direcionada
+Converse comigo para definir quantos dias será a experiência (entre 7 e 30 dias) e crie todo o conteúdo.
 
-3. Crie também uma landing page persuasiva para o produto
+Para cada dia, você deve criar:
+1. Um título inspirador para o dia
+2. Um texto devocional de 200-300 palavras
+3. Uma passagem bíblica com referência
+4. 3-5 perguntas reflexivas com 4 opções de resposta cada (marque a resposta correta)
+5. Uma oração direcionada
 
-**FORMATO DE RESPOSTA OBRIGATÓRIO:**
-\`\`\`json
-{
-  "days": [
-    {
-      "day": 1,
-      "title": "Título do Dia",
-      "devotional": "Texto devocional completo...",
-      "scripture": {
-        "reference": "João 3:16",
-        "text": "Texto da passagem bíblica"
-      },
-      "quiz": [
-        {
-          "question": "Pergunta reflexiva?",
-          "options": ["A", "B", "C", "D"],
-          "correct": 0
-        }
-      ],
-      "prayer": "Oração direcionada para o tema do dia"
-    }
-  ],
-  "landingPage": {
-    "headline": "Título principal",
-    "subheadline": "Subtítulo",
-    "benefits": ["Benefício 1", "Benefício 2"],
-    "testimonials": ["Depoimento 1", "Depoimento 2"],
-    "cta": "Texto do botão"
-  }
-}
-\`\`\`
+Também crie uma landing page persuasiva para vender o produto.
 
-Crie agora a experiência completa seguindo exatamente este formato!`;
+**IMPORTANTE: RESPONDA EM FORMATO DE TEXTO SIMPLES COMO ESTE EXEMPLO:**
+
+EXPERIÊNCIA: 21 DIAS
+
+=== DIA 1 ===
+TÍTULO: Novo Amanhecer
+DEVOCIONAL: [Texto completo do devocional aqui...]
+PASSAGEM: João 3:16 - "Porque Deus amou o mundo de tal maneira..."
+QUIZ:
+P1: Qual é o principal tema deste devocional?
+A) Amor de Deus (CORRETA)
+B) Perdão
+C) Fé
+D) Esperança
+
+P2: [Segunda pergunta]
+A) Opção A
+B) Opção B (CORRETA)
+C) Opção C
+D) Opção D
+ORAÇÃO: [Texto da oração...]
+
+=== DIA 2 ===
+[Repetir o formato...]
+
+=== LANDING PAGE ===
+TÍTULO: [Título principal]
+SUBTÍTULO: [Subtítulo]
+BENEFÍCIOS: 
+- Benefício 1
+- Benefício 2
+- Benefício 3
+DEPOIMENTOS:
+"Depoimento 1..."
+"Depoimento 2..."
+BOTÃO: [Texto do botão de compra]
+
+Agora crie a experiência completa seguindo exatamente este formato!`;
 
     setGeneratedPrompt(prompt);
   };
@@ -201,13 +206,84 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
 
   const parseGptResponse = () => {
     try {
-      // Extract JSON from response
-      const jsonMatch = gptResponse.match(/```json\n([\s\S]*?)\n```/);
-      if (!jsonMatch) {
-        throw new Error("JSON não encontrado na resposta");
+      const content = gptResponse.trim();
+      
+      // Parse the text format
+      const experienceMatch = content.match(/EXPERIÊNCIA:\s*(\d+)\s*DIAS/i);
+      const totalDays = experienceMatch ? parseInt(experienceMatch[1]) : 0;
+      
+      if (totalDays === 0) {
+        throw new Error("Número de dias não encontrado");
       }
       
-      const parsed = JSON.parse(jsonMatch[1]);
+      // Extract days
+      const dayRegex = /=== DIA (\d+) ===\s*TÍTULO:\s*(.*?)\s*DEVOCIONAL:\s*([\s\S]*?)PASSAGEM:\s*(.*?)\s*QUIZ:\s*([\s\S]*?)ORAÇÃO:\s*([\s\S]*?)(?=\s*===|$)/gi;
+      const days = [];
+      let dayMatch;
+      
+      while ((dayMatch = dayRegex.exec(content)) !== null) {
+        const [, dayNum, title, devotional, passage, quizSection, prayer] = dayMatch;
+        
+        // Parse quiz questions
+        const quiz = [];
+        const questionRegex = /P(\d+):\s*(.*?)\s*A\)\s*(.*?)\s*(?:\(CORRETA\))?\s*B\)\s*(.*?)\s*(?:\(CORRETA\))?\s*C\)\s*(.*?)\s*(?:\(CORRETA\))?\s*D\)\s*(.*?)\s*(?:\(CORRETA\))?/g;
+        let questionMatch;
+        
+        while ((questionMatch = questionRegex.exec(quizSection)) !== null) {
+          const [fullMatch, qNum, question, optA, optB, optC, optD] = questionMatch;
+          const options = [optA.replace(/\s*\(CORRETA\)/, ''), optB.replace(/\s*\(CORRETA\)/, ''), optC.replace(/\s*\(CORRETA\)/, ''), optD.replace(/\s*\(CORRETA\)/, '')];
+          
+          // Find correct answer
+          let correct = 0;
+          if (fullMatch.includes(optA + ' (CORRETA)')) correct = 0;
+          else if (fullMatch.includes(optB + ' (CORRETA)')) correct = 1;
+          else if (fullMatch.includes(optC + ' (CORRETA)')) correct = 2;
+          else if (fullMatch.includes(optD + ' (CORRETA)')) correct = 3;
+          
+          quiz.push({
+            question: question.trim(),
+            options: options.map(opt => opt.trim()),
+            correct
+          });
+        }
+        
+        // Parse scripture
+        const scriptureRegex = /(.*?)\s*-\s*"(.*)"/;
+        const scriptureMatch = passage.match(scriptureRegex);
+        const scripture = scriptureMatch 
+          ? { reference: scriptureMatch[1].trim(), text: scriptureMatch[2].trim() }
+          : { reference: passage.trim(), text: passage.trim() };
+        
+        days.push({
+          day: parseInt(dayNum),
+          title: title.trim(),
+          devotional: devotional.trim(),
+          scripture,
+          quiz,
+          prayer: prayer.trim()
+        });
+      }
+      
+      // Extract landing page
+      const landingMatch = content.match(/=== LANDING PAGE ===\s*TÍTULO:\s*(.*?)\s*SUBTÍTULO:\s*(.*?)\s*BENEFÍCIOS:\s*([\s\S]*?)DEPOIMENTOS:\s*([\s\S]*?)BOTÃO:\s*(.*?)(?:\s*$)/i);
+      
+      let landingPage = null;
+      if (landingMatch) {
+        const [, headline, subheadline, benefitsSection, testimonialsSection, cta] = landingMatch;
+        
+        const benefits = benefitsSection.split(/\n/).filter(line => line.trim().startsWith('-')).map(line => line.replace(/^-\s*/, '').trim());
+        const testimonials = testimonialsSection.split(/\n/).filter(line => line.trim().startsWith('"')).map(line => line.replace(/^"|"$/g, '').trim());
+        
+        landingPage = {
+          headline: headline.trim(),
+          subheadline: subheadline.trim(),
+          benefits,
+          testimonials,
+          cta: cta.trim()
+        };
+      }
+      
+      const parsed = { days, landingPage };
       setParsedContent(parsed);
       updateProductData("content", parsed.days);
       updateProductData("landingPage", parsed.landingPage);
@@ -216,12 +292,14 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
         title: "Conteúdo importado!",
         description: `${parsed.days.length} dias de experiência criados.`
       });
+      
     } catch (error) {
       toast({
         title: "Erro ao importar",
-        description: "Verifique se a resposta está no formato correto.",
+        description: "Verifique se a resposta está no formato correto conforme o exemplo.",
         variant: "destructive"
       });
+      console.error("Erro ao processar:", error);
     }
   };
 
