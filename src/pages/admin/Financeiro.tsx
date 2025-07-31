@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,11 @@ import {
   Receipt,
   PieChart,
   BarChart3,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const transactions = [
   {
@@ -68,6 +71,106 @@ const monthlyData = [
 export default function Financeiro() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(true);
+  const [financialData, setFinancialData] = useState({
+    grossRevenue: 0,
+    netRevenue: 0,
+    transactions: 0,
+    avgTicket: 0,
+    recentTransactions: []
+  });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchFinancialData();
+  }, [selectedPeriod]);
+
+  const fetchFinancialData = async () => {
+    try {
+      setLoading(true);
+
+      // Calculate date range based on selected period
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (selectedPeriod) {
+        case "7d":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "30d":
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case "90d":
+          startDate.setDate(now.getDate() - 90);
+          break;
+        case "1y":
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      // Fetch purchases data
+      const { data: purchases, error: purchasesError } = await supabase
+        .from('purchases')
+        .select(`
+          *,
+          products(title)
+        `)
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (purchasesError) throw purchasesError;
+
+      // Calculate metrics
+      const grossRevenue = purchases?.reduce((sum, purchase) => sum + (purchase.amount || 0), 0) || 0;
+      const netRevenue = grossRevenue * 0.95; // Assuming 5% fees
+      const transactions = purchases?.length || 0;
+      const avgTicket = transactions > 0 ? grossRevenue / transactions : 0;
+
+      // Format recent transactions
+      const recentTransactions = purchases?.slice(0, 10).map(purchase => ({
+        id: purchase.id,
+        type: "Venda",
+        description: purchase.products?.title || "Produto",
+        amount: `R$ ${((purchase.amount || 0) / 100).toFixed(2).replace('.', ',')}`,
+        fee: `R$ ${(((purchase.amount || 0) * 0.05) / 100).toFixed(2).replace('.', ',')}`,
+        net: `R$ ${(((purchase.amount || 0) * 0.95) / 100).toFixed(2).replace('.', ',')}`,
+        status: "Aprovada",
+        date: purchase.created_at,
+        customer: "Cliente",
+        method: "Cartão de Crédito"
+      })) || [];
+
+      setFinancialData({
+        grossRevenue: grossRevenue / 100, // Convert from cents
+        netRevenue: netRevenue / 100,
+        transactions,
+        avgTicket: avgTicket / 100,
+        recentTransactions
+      });
+
+    } catch (error) {
+      console.error('Error fetching financial data:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados financeiros.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando dados financeiros...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-8">
@@ -106,7 +209,9 @@ export default function Financeiro() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Receita Bruta</p>
-                <p className="text-2xl font-bold text-foreground">R$ 24.847</p>
+                <p className="text-2xl font-bold text-foreground">
+                  R$ {financialData.grossRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                </p>
                 <div className="flex items-center text-sm mt-1">
                   <TrendingUp className="h-3 w-3 text-success mr-1" />
                   <span className="text-success">+34.7%</span>
@@ -123,7 +228,9 @@ export default function Financeiro() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Receita Líquida</p>
-                <p className="text-2xl font-bold text-foreground">R$ 23.605</p>
+                <p className="text-2xl font-bold text-foreground">
+                  R$ {financialData.netRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                </p>
                 <div className="flex items-center text-sm mt-1">
                   <span className="text-muted-foreground">Taxa: 5%</span>
                 </div>
@@ -138,7 +245,7 @@ export default function Financeiro() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Transações</p>
-                <p className="text-2xl font-bold text-foreground">389</p>
+                <p className="text-2xl font-bold text-foreground">{financialData.transactions}</p>
                 <div className="flex items-center text-sm mt-1">
                   <TrendingUp className="h-3 w-3 text-success mr-1" />
                   <span className="text-success">+102</span>
@@ -155,7 +262,9 @@ export default function Financeiro() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Ticket Médio</p>
-                <p className="text-2xl font-bold text-foreground">R$ 63,87</p>
+                <p className="text-2xl font-bold text-foreground">
+                  R$ {financialData.avgTicket.toFixed(2).replace('.', ',')}
+                </p>
                 <div className="flex items-center text-sm mt-1">
                   <TrendingDown className="h-3 w-3 text-destructive mr-1" />
                   <span className="text-destructive">-R$ 0,42</span>
@@ -305,7 +414,7 @@ export default function Financeiro() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((transaction) => (
+                  {financialData.recentTransactions.length > 0 ? financialData.recentTransactions.map((transaction) => (
                     <TableRow key={transaction.id} className="hover:bg-muted/50">
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(transaction.date).toLocaleString('pt-BR')}
@@ -349,7 +458,16 @@ export default function Financeiro() {
                         </Badge>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2">
+                          <Receipt className="h-8 w-8 text-muted-foreground" />
+                          <p className="text-muted-foreground">Nenhuma transação encontrada para o período selecionado</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

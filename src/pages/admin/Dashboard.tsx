@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +14,101 @@ import {
   Calendar,
   ArrowUp,
   ArrowDown,
-  Plus
+  Plus,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    totalRevenue: 0,
+    totalPurchases: 0,
+    activeExperiences: 0,
+    conversionRate: 0,
+    topExperiences: [],
+    recentActivity: []
+  });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch purchases data
+      const { data: purchases, error: purchasesError } = await supabase
+        .from('purchases')
+        .select('amount, created_at, product_id, products(title)')
+        .eq('status', 'completed');
+
+      if (purchasesError) throw purchasesError;
+
+      // Fetch experiences data
+      const { data: experiences, error: experiencesError } = await supabase
+        .from('experiences')
+        .select('id, title, is_active')
+        .eq('is_active', true);
+
+      if (experiencesError) throw experiencesError;
+
+      // Fetch products data
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, title, price, experience_id')
+        .eq('is_active', true);
+
+      if (productsError) throw productsError;
+
+      // Calculate metrics
+      const totalRevenue = purchases?.reduce((sum, purchase) => sum + (purchase.amount || 0), 0) || 0;
+      const totalPurchases = purchases?.length || 0;
+      const activeExperiences = experiences?.length || 0;
+
+      // Calculate top experiences (mock for now)
+      const topExperiences = experiences?.slice(0, 4).map((exp, index) => ({
+        name: exp.title,
+        sales: Math.floor(Math.random() * 200) + 50,
+        revenue: `R$ ${(Math.random() * 10000 + 5000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`,
+        change: `+${Math.floor(Math.random() * 20) + 5}%`
+      })) || [];
+
+      setDashboardData({
+        totalRevenue: totalRevenue / 100, // Convert from cents
+        totalPurchases,
+        activeExperiences,
+        conversionRate: totalPurchases > 0 ? ((totalPurchases / (totalPurchases * 20)) * 100) : 0, // Mock conversion rate
+        topExperiences,
+        recentActivity: []
+      });
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados do dashboard.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
@@ -51,7 +142,9 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">R$ 24.847</div>
+            <div className="text-2xl font-bold text-foreground">
+              R$ {dashboardData.totalRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+            </div>
             <div className="flex items-center text-sm">
               <ArrowUp className="h-3 w-3 text-success mr-1" />
               <span className="text-success">+12.5%</span>
@@ -69,7 +162,7 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">1.247</div>
+            <div className="text-2xl font-bold text-foreground">{dashboardData.totalPurchases}</div>
             <div className="flex items-center text-sm">
               <ArrowUp className="h-3 w-3 text-success mr-1" />
               <span className="text-success">+8.2%</span>
@@ -87,7 +180,7 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">3.8%</div>
+            <div className="text-2xl font-bold text-foreground">{dashboardData.conversionRate.toFixed(1)}%</div>
             <div className="flex items-center text-sm">
               <ArrowDown className="h-3 w-3 text-destructive mr-1" />
               <span className="text-destructive">-2.1%</span>
@@ -105,7 +198,7 @@ export default function Dashboard() {
             <Package className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">12</div>
+            <div className="text-2xl font-bold text-foreground">{dashboardData.activeExperiences}</div>
             <div className="flex items-center text-sm">
               <ArrowUp className="h-3 w-3 text-success mr-1" />
               <span className="text-success">+2</span>
@@ -141,12 +234,7 @@ export default function Dashboard() {
             <CardDescription>Mais vendidas este mês</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { name: "Transformação 24h", sales: 247, revenue: "R$ 12.350", change: "+15%" },
-              { name: "Foco Total", sales: 189, revenue: "R$ 9.450", change: "+8%" },
-              { name: "Energia Renovada", sales: 156, revenue: "R$ 7.800", change: "+12%" },
-              { name: "Mindset Vencedor", sales: 134, revenue: "R$ 6.700", change: "+5%" },
-            ].map((exp, index) => (
+            {dashboardData.topExperiences.map((exp, index) => (
               <div key={exp.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">

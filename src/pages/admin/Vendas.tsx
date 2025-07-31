@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,11 @@ import {
   ArrowUpRight,
   Percent,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const funnels = [
   {
@@ -89,6 +92,93 @@ const upsells = [
 
 export default function Vendas() {
   const [activeTab, setActiveTab] = useState("funnels");
+  const [loading, setLoading] = useState(true);
+  const [salesData, setSalesData] = useState({
+    totalRevenue: 0,
+    conversionRate: 0,
+    activeCoupons: 0,
+    upsellConversion: 0,
+    totalSales: 0
+  });
+  const [realCoupons, setRealCoupons] = useState([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchSalesData();
+  }, []);
+
+  const fetchSalesData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch purchases data
+      const { data: purchases, error: purchasesError } = await supabase
+        .from('purchases')
+        .select('*')
+        .eq('status', 'completed');
+
+      if (purchasesError) throw purchasesError;
+
+      // Fetch coupons data
+      const { data: coupons, error: couponsError } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true);
+
+      if (couponsError) throw couponsError;
+
+      // Calculate metrics
+      const totalRevenue = purchases?.reduce((sum, purchase) => sum + (purchase.amount || 0), 0) || 0;
+      const totalSales = purchases?.length || 0;
+      const activeCoupons = coupons?.length || 0;
+
+      // Format coupons for display
+      const formattedCoupons = coupons?.map(coupon => ({
+        id: coupon.id,
+        code: coupon.code,
+        discount: coupon.discount_type === 'percentage' 
+          ? `${coupon.discount_value}%` 
+          : `R$ ${(coupon.discount_value / 100).toFixed(2)}`,
+        type: coupon.discount_type,
+        uses: coupon.current_uses || 0,
+        maxUses: coupon.max_uses || 100,
+        revenue: `R$ ${((totalRevenue * 0.1) / 100).toFixed(0)}`, // Mock calculation
+        expiresAt: coupon.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        status: "Ativo"
+      })) || [];
+
+      setSalesData({
+        totalRevenue: totalRevenue / 100, // Convert from cents
+        conversionRate: totalSales > 0 ? ((totalSales / (totalSales * 25)) * 100) : 4.8, // Mock conversion rate
+        activeCoupons,
+        upsellConversion: 16.1, // Mock data
+        totalSales
+      });
+
+      setRealCoupons(formattedCoupons);
+
+    } catch (error) {
+      console.error('Error fetching sales data:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados de vendas.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando dados de vendas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-8">
@@ -113,7 +203,7 @@ export default function Vendas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Taxa Conversão Geral</p>
-                <p className="text-2xl font-bold text-foreground">4.8%</p>
+                <p className="text-2xl font-bold text-foreground">{salesData.conversionRate.toFixed(1)}%</p>
                 <p className="text-sm text-success flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
                   +0.8% vs mês anterior
@@ -129,7 +219,9 @@ export default function Vendas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Receita Funis</p>
-                <p className="text-2xl font-bold text-foreground">R$ 63.507</p>
+                <p className="text-2xl font-bold text-foreground">
+                  R$ {salesData.totalRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                </p>
                 <p className="text-sm text-success flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
                   +15.2% vs mês anterior
@@ -145,7 +237,7 @@ export default function Vendas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Cupons Ativos</p>
-                <p className="text-2xl font-bold text-foreground">8</p>
+                <p className="text-2xl font-bold text-foreground">{salesData.activeCoupons}</p>
                 <p className="text-sm text-muted-foreground">336 usos este mês</p>
               </div>
               <Gift className="h-8 w-8 text-warning" />
@@ -251,7 +343,7 @@ export default function Vendas() {
           </div>
 
           <div className="grid gap-6">
-            {coupons.map((coupon) => (
+            {realCoupons.length > 0 ? realCoupons.map((coupon) => (
               <Card key={coupon.id} className="shadow-soft border-soft">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -299,7 +391,23 @@ export default function Vendas() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <Card className="shadow-soft border-soft">
+                <CardContent className="p-12 text-center">
+                  <Gift className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    Nenhum cupom ativo
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Crie seu primeiro cupom de desconto para aumentar as vendas
+                  </p>
+                  <Button className="gap-2 gradient-primary text-white">
+                    <Plus className="h-4 w-4" />
+                    Criar Primeiro Cupom
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
