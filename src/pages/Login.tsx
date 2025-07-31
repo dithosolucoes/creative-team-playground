@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,49 +6,122 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/admin/dashboard");
+      }
+    };
+    checkUser();
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
     
     setIsLoading(true);
     
-    // Simple auth check - replace with real auth later
-    if (email === 'admin@proposito24h.com') {
-      setTimeout(() => {
-        setIsLoading(false);
-        window.location.href = '/admin/dashboard';
-      }, 1200);
-    } else {
-      setTimeout(() => {
-        setIsLoading(false);
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao Propósito24h",
-        });
-      }, 1200);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao Propósito24h",
+      });
+      
+      navigate("/admin/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Erro no login",
+        description: error.message || "Email ou senha inválidos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const email = formData.get('register-email') as string;
+    const password = formData.get('register-password') as string;
+    const confirmPassword = formData.get('register-confirm') as string;
+    const name = formData.get('register-name') as string;
+    
     setIsLoading(true);
     
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (password !== confirmPassword) {
+        throw new Error("As senhas não coincidem");
+      }
+
+      if (password.length < 6) {
+        throw new Error("A senha deve ter pelo menos 6 caracteres");
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: name,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // Create profile record
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            email: email,
+            name: name,
+          });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+        }
+      }
+
       toast({
         title: "Conta criada com sucesso!",
-        description: "Agora você pode fazer login",
+        description: "Verifique seu email para confirmar a conta.",
       });
-    }, 1200);
+    } catch (error: any) {
+      toast({
+        title: "Erro no registro",
+        description: error.message || "Algo deu errado. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -120,13 +193,14 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
-                      <Input
-                        id="login-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        required
-                        className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
-                      />
+                       <Input
+                         id="login-password"
+                         name="password"
+                         type={showPassword ? "text" : "password"}
+                         placeholder="••••••••"
+                         required
+                         className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
+                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
@@ -164,13 +238,14 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
-                      <Input
-                        id="register-name"
-                        type="text"
-                        placeholder="Seu nome"
-                        required
-                        className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
-                      />
+                       <Input
+                         id="register-name"
+                         name="register-name"
+                         type="text"
+                         placeholder="Seu nome"
+                         required
+                         className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
+                       />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -179,13 +254,14 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        required
-                        className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
-                      />
+                       <Input
+                         id="register-email"
+                         name="register-email"
+                         type="email"
+                         placeholder="seu@email.com"
+                         required
+                         className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
+                       />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -194,13 +270,14 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
-                      <Input
-                        id="register-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        required
-                        className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
-                      />
+                       <Input
+                         id="register-password"
+                         name="register-password"
+                         type={showPassword ? "text" : "password"}
+                         placeholder="••••••••"
+                         required
+                         className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
+                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
@@ -216,13 +293,14 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
-                      <Input
-                        id="register-confirm"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        required
-                        className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
-                      />
+                       <Input
+                         id="register-confirm"
+                         name="register-confirm"
+                         type={showConfirmPassword ? "text" : "password"}
+                         placeholder="••••••••"
+                         required
+                         className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
+                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
