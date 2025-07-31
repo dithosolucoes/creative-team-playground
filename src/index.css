@@ -10,52 +10,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Arctic Flow - Modernized Colors */
-    --background: 0 0% 98%;
-    --foreground: 220 15% 15%;
+    /* Arctic Flow - Premium Design System */
+    --background: 216 27% 96%;
+    --foreground: 216 19% 16%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
+    --card-foreground: 216 19% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --popover-foreground: 216 19% 16%;
 
-    --primary: 200 100% 50%;
+    --primary: 210 100% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 220 15% 25%;
+    --secondary: 216 12% 84%;
+    --secondary-foreground: 216 19% 27%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 216 12% 84%;
+    --muted-foreground: 216 19% 45%;
 
-    --accent: 200 100% 95%;
-    --accent-foreground: 200 100% 25%;
+    --accent: 210 40% 92%;
+    --accent-foreground: 210 100% 40%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 13% 85%;
-    --input: 220 13% 91%;
-    --ring: 200 100% 50%;
+    --border: 216 12% 84%;
+    --input: 0 0% 100%;
+    --ring: 210 100% 56%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Premium gradients and effects */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 56%), hsl(210 100% 64%));
+    --gradient-bg: linear-gradient(135deg, hsl(216 27% 96%), hsl(210 40% 98%));
+    --shadow-card: 0 4px 6px -1px hsl(216 19% 16% / 0.1), 0 2px 4px -2px hsl(216 19% 16% / 0.1);
+    --shadow-button: 0 1px 2px 0 hsl(216 19% 16% / 0.05);
+    --border-card: hsl(216 19% 16% / 0.1);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 216 27% 96%;
+    --sidebar-foreground: 216 19% 27%;
+    --sidebar-primary: 210 100% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 216 12% 84%;
+    --sidebar-accent-foreground: 216 19% 27%;
+    --sidebar-border: 216 12% 84%;
+    --sidebar-ring: 210 100% 56%;
   }
 
   .dark {
@@ -103,6 +103,25 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter antialiased;
+    background: var(--gradient-bg);
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  
+  .shadow-button {
+    box-shadow: var(--shadow-button);
+  }
+  
+  .border-card {
+    border: 1px solid var(--border-card);
   }
 }
