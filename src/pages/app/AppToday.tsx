@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Heart, 
   Play, 
@@ -11,40 +12,197 @@ import {
   MessageCircle,
   Star,
   Clock,
-  Flame
+  Flame,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AppToday() {
-  const [currentDay] = useState(7);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [currentDay, setCurrentDay] = useState(1);
   const [completedToday, setCompletedToday] = useState(false);
+  const [userProgress, setUserProgress] = useState(null);
+  const [experienceData, setExperienceData] = useState(null);
+  const [reflections, setReflections] = useState({
+    question1: "",
+    question2: ""
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProgress();
+    }
+  }, [user]);
+
+  const fetchUserProgress = async () => {
+    try {
+      setLoading(true);
+
+      // First, get user's active product
+      const { data: purchases, error: purchasesError } = await supabase
+        .from('purchases')
+        .select(`
+          *,
+          products(
+            *,
+            experiences(*)
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (purchasesError) throw purchasesError;
+
+      if (!purchases || purchases.length === 0) {
+        toast({
+          title: "Nenhuma experiência encontrada",
+          description: "Você ainda não possui nenhuma experiência ativa.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const userProduct = purchases[0];
+      const experience = userProduct.products.experiences;
+
+      // Get user progress for this product
+      const { data: progress, error: progressError } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product_id', userProduct.product_id)
+        .order('day_number', { ascending: false })
+        .limit(1);
+
+      if (progressError) throw progressError;
+
+      const lastCompletedDay = progress && progress.length > 0 ? progress[0].day_number : 0;
+      const experienceContent = experience?.content as any;
+      const nextDay = Math.min(lastCompletedDay + 1, experienceContent?.days || 21);
+
+      setCurrentDay(nextDay);
+      setExperienceData(experience);
+      setUserProgress(progress && progress.length > 0 ? progress[0] : null);
+
+      // Check if today is already completed
+      const todayProgress = progress?.find(p => p.day_number === nextDay && p.completed);
+      setCompletedToday(!!todayProgress);
+
+    } catch (error) {
+      console.error('Error fetching user progress:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar sua experiência.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveProgress = async () => {
+    try {
+      if (!user || !experienceData) return;
+
+      const { data: purchases } = await supabase
+        .from('purchases')
+        .select('product_id')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .limit(1);
+
+      if (!purchases || purchases.length === 0) return;
+
+      await supabase.from('user_progress').upsert({
+        user_id: user.id,
+        product_id: purchases[0].product_id,
+        day_number: currentDay,
+        completed: true,
+        data: {
+          reflections: reflections,
+          completed_at: new Date().toISOString()
+        },
+        completed_at: new Date().toISOString()
+      });
+
+      setCompletedToday(true);
+      toast({
+        title: "Progresso salvo!",
+        description: "Parabéns por completar mais um dia da sua jornada!",
+      });
+
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar seu progresso.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando sua experiência...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!experienceData) {
+    return (
+      <div className="container mx-auto px-4 py-6 text-center">
+        <h2 className="text-xl font-bold mb-4">Nenhuma experiência ativa</h2>
+        <p className="text-muted-foreground">
+          Você ainda não possui nenhuma experiência ativa. Adquira uma experiência para começar sua jornada!
+        </p>
+      </div>
+    );
+  }
+
+  // Get current day content from experience data
+  const experienceContent = experienceData?.content as any;
+  const dailyContent = experienceContent?.daily_content?.[currentDay.toString()];
   
   const todayContent = {
     day: currentDay,
-    title: "Encontrando Propósito na Gratidão",
-    verse: "Em tudo dai graças, porque esta é a vontade de Deus em Cristo Jesus para convosco.",
-    verseRef: "1 Tessalonicenses 5:18",
-    reflection: "A gratidão é uma das chaves mais poderosas para uma vida transformada. Quando escolhemos ser gratos, mudamos nossa perspectiva e abrimos nosso coração para as bênçãos de Deus.",
-    tasks: [
-      { id: 1, title: "Leia a reflexão", completed: true },
-      { id: 2, title: "Faça a meditação guiada", completed: false },
-      { id: 3, title: "Responda as perguntas", completed: false },
-      { id: 4, title: "Pratique gratidão", completed: false }
-    ]
+    title: dailyContent?.title || `Dia ${currentDay} - Reflexão Diária`,
+    verse: dailyContent?.verse || "Renovai-vos no espírito do vosso entendimento - Efésios 4:23",
+    verseRef: "Efésios 4:23",
+    reflection: dailyContent?.reflection || "Hoje é um novo dia para crescer e se transformar. Aproveite cada momento desta jornada.",
+    action: dailyContent?.action || "Reflita sobre seu crescimento pessoal",
+    questions: dailyContent?.questions || [
+      "O que você aprendeu hoje?",
+      "Como pode aplicar isso na sua vida?"
+    ],
+    meditation: dailyContent?.meditation || "Dedique alguns minutos para meditar e refletir."
   };
 
-  const completedTasks = todayContent.tasks.filter(task => task.completed).length;
-  const progressPercentage = (completedTasks / todayContent.tasks.length) * 100;
+  const tasks = [
+    { id: 1, title: "Leia a reflexão", completed: true },
+    { id: 2, title: "Faça a meditação guiada", completed: false },
+    { id: 3, title: "Responda as perguntas", completed: reflections.question1 && reflections.question2 },
+    { id: 4, title: "Complete a ação do dia", completed: false }
+  ];
 
-  const handleMarkComplete = () => {
-    setCompletedToday(true);
-  };
+  const completedTasks = tasks.filter(task => task.completed).length;
+  const progressPercentage = (completedTasks / tasks.length) * 100;
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Day Header */}
       <div className="text-center space-y-2">
         <Badge className="bg-primary/10 text-primary border-primary/20">
-          Dia {todayContent.day} de 21
+          Dia {todayContent.day} de {(experienceData?.content as any)?.days || 21}
         </Badge>
         <h1 className="text-2xl font-bold text-foreground">
           {todayContent.title}
@@ -61,7 +219,7 @@ export default function AppToday() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-foreground">Progresso de Hoje</span>
             <span className="text-sm text-muted-foreground">
-              {completedTasks}/{todayContent.tasks.length}
+              {completedTasks}/{tasks.length}
             </span>
           </div>
           <Progress value={progressPercentage} className="h-2" />
@@ -134,20 +292,26 @@ export default function AppToday() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <p className="font-medium text-foreground">
-              1. Quais são 3 coisas pelas quais você é grato hoje?
+              {todayContent.questions[0]}
             </p>
-            <div className="h-20 bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-              Toque para escrever...
-            </div>
+            <Textarea
+              placeholder="Escreva sua reflexão..."
+              value={reflections.question1}
+              onChange={(e) => setReflections(prev => ({...prev, question1: e.target.value}))}
+              className="min-h-20"
+            />
           </div>
           
           <div className="space-y-2">
             <p className="font-medium text-foreground">
-              2. Como a gratidão pode transformar seu dia?
+              {todayContent.questions[1]}
             </p>
-            <div className="h-20 bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-              Toque para escrever...
-            </div>
+            <Textarea
+              placeholder="Escreva sua reflexão..."
+              value={reflections.question2}
+              onChange={(e) => setReflections(prev => ({...prev, question2: e.target.value}))}
+              className="min-h-20"
+            />
           </div>
         </CardContent>
       </Card>
@@ -157,7 +321,7 @@ export default function AppToday() {
         <CardContent className="p-6">
           {!completedToday ? (
             <Button 
-              onClick={handleMarkComplete}
+              onClick={handleSaveProgress}
               className="w-full text-lg py-6 bg-primary hover:bg-primary/90"
               disabled={progressPercentage < 75}
             >
