@@ -571,119 +571,228 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
     );
   };
 
-  const renderStep5 = () => (
-    <div className="space-y-6">
-      <Card className="shadow-soft border-soft">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Geração de Conteúdo
-          </CardTitle>
-          <CardDescription>
-            Gere o conteúdo da sua experiência usando IA
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <Button 
-                onClick={generatePrompt}
-                className="gradient-primary text-white"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Gerar Prompt
-              </Button>
-              {generatedPrompt && (
-                <Button 
-                  variant="outline" 
-                  onClick={copyPrompt}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar Prompt
-                </Button>
-              )}
-            </div>
+  const renderStep5 = () => {
+    // Auto-generate prompt when entering step 5
+    React.useEffect(() => {
+      if (currentStep === 5 && !generatedPrompt) {
+        generatePrompt();
+      }
+    }, [currentStep]);
 
-            {generatedPrompt && (
-              <div className="space-y-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <pre className="text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">
-                    {generatedPrompt}
-                  </pre>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="gpt-response">Cole a resposta do GPT aqui:</Label>
-                  <Textarea
-                    id="gpt-response"
-                    placeholder="Cole a resposta completa do ChatGPT..."
-                    value={gptResponse}
-                    onChange={(e) => setGptResponse(e.target.value)}
-                    rows={8}
-                  />
-                </div>
-
-                <Button 
-                  onClick={parseGptResponse}
-                  disabled={!gptResponse}
-                  variant="outline"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Importar Conteúdo
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {parsedContent && (
+    return (
+      <div className="space-y-6">
         <Card className="shadow-soft border-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" />
-              Preview do Conteúdo
+              <Zap className="h-5 w-5 text-primary" />
+              Geração de Conteúdo com IA
             </CardTitle>
             <CardDescription>
-              {parsedContent.days?.length} dias de experiência criados
+              Siga as instruções abaixo para gerar o conteúdo da sua experiência
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2 flex-wrap">
-              {parsedContent.days?.map((day: any, idx: number) => (
-                <Button
-                  key={idx}
-                  variant={currentDay === day.day ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentDay(day.day)}
-                >
-                  Dia {day.day}
-                </Button>
-              ))}
+          <CardContent className="space-y-6">
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <h3 className="font-semibold text-blue-900 mb-2">📋 Como usar:</h3>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Clique no botão "Copiar Prompt para GPT" abaixo</li>
+                <li>Abra o ChatGPT em uma nova aba</li>
+                <li>Cole o prompt e envie</li>
+                <li>Copie toda a resposta do ChatGPT</li>
+                <li>Cole aqui na caixa de texto e clique em "Processar Conteúdo"</li>
+              </ol>
             </div>
 
-            {parsedContent.days && (
-              <div className="border rounded-lg p-4 space-y-4">
-                {(() => {
-                  const day = parsedContent.days.find((d: any) => d.day === currentDay);
-                  return day ? (
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg text-foreground">{day.title}</h3>
-                      <div className="text-sm text-muted-foreground">
-                        <p><strong>Devocional:</strong> {day.devotional.substring(0, 100)}...</p>
-                        <p><strong>Passagem:</strong> {day.scripture.reference}</p>
-                        <p><strong>Quiz:</strong> {day.quiz.length} perguntas</p>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
+            {/* Copy Prompt Button */}
+            <div className="flex justify-center">
+              <Button 
+                onClick={copyPrompt}
+                className="gradient-primary text-white px-8 py-3 text-lg"
+                disabled={!generatedPrompt}
+              >
+                <Copy className="h-5 w-5 mr-3" />
+                Copiar Prompt para GPT
+              </Button>
+            </div>
+
+            {/* Prompt Preview */}
+            {generatedPrompt && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Preview do Prompt (será copiado automaticamente):</Label>
+                <div className="bg-gray-50 border rounded-lg p-4 max-h-48 overflow-y-auto">
+                  <pre className="text-xs text-gray-700 whitespace-pre-wrap">
+                    {generatedPrompt}
+                  </pre>
+                </div>
               </div>
             )}
+
+            {/* Paste Response Area */}
+            <div className="space-y-3">
+              <Label htmlFor="gpt-response" className="text-base font-semibold">
+                Cole aqui a resposta completa do ChatGPT:
+              </Label>
+              <Textarea
+                id="gpt-response"
+                placeholder="Cole toda a resposta do ChatGPT aqui, incluindo o código JSON..."
+                value={gptResponse}
+                onChange={(e) => setGptResponse(e.target.value)}
+                rows={12}
+                className="text-sm font-mono resize-none"
+              />
+              <div className="flex justify-end">
+                <Button 
+                  onClick={parseGptResponse}
+                  disabled={!gptResponse}
+                  className="gradient-primary text-white px-6"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Processar Conteúdo
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      )}
-    </div>
-  );
+
+        {/* Content Navigator */}
+        {parsedContent && (
+          <Card className="shadow-soft border-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                Navegador de Conteúdo
+              </CardTitle>
+              <CardDescription>
+                {parsedContent.days?.length} dias de experiência criados • Navegue e revise o conteúdo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Day Navigator */}
+              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentDay(Math.max(1, currentDay - 1))}
+                  disabled={currentDay === 1}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Anterior
+                </Button>
+                
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground">Visualizando</div>
+                  <div className="font-semibold">Dia {currentDay} de {parsedContent.days?.length}</div>
+                </div>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentDay(Math.min(parsedContent.days?.length || 1, currentDay + 1))}
+                  disabled={currentDay === parsedContent.days?.length}
+                >
+                  Próximo
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+
+              {/* Day Preview */}
+              {parsedContent.days && (
+                <div className="space-y-6">
+                  {(() => {
+                    const day = parsedContent.days.find((d: any) => d.day === currentDay);
+                    return day ? (
+                      <div className="space-y-4">
+                        {/* Day Title */}
+                        <div className="text-center pb-4 border-b">
+                          <h2 className="text-2xl font-bold text-foreground">{day.title}</h2>
+                          <p className="text-muted-foreground">Dia {day.day}</p>
+                        </div>
+
+                        {/* Devotional Section */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                            <Heart className="h-5 w-5" />
+                            Devocional
+                          </h3>
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                            <p className="text-sm leading-relaxed">{day.devotional}</p>
+                          </div>
+                        </div>
+
+                        {/* Scripture Section */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold text-secondary flex items-center gap-2">
+                            📖 Passagem Bíblica
+                          </h3>
+                          <div className="bg-secondary/5 border border-secondary/20 rounded-lg p-4">
+                            <p className="font-semibold text-secondary mb-2">{day.scripture.reference}</p>
+                            <p className="text-sm italic">{day.scripture.text}</p>
+                          </div>
+                        </div>
+
+                        {/* Quiz Section */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold text-accent flex items-center gap-2">
+                            🤔 Quiz Reflexivo
+                          </h3>
+                          <div className="bg-accent/5 border border-accent/20 rounded-lg p-4 space-y-3">
+                            {day.quiz.map((q: any, idx: number) => (
+                              <div key={idx} className="space-y-2">
+                                <p className="font-medium text-sm">{idx + 1}. {q.question}</p>
+                                <div className="grid grid-cols-2 gap-2 ml-4">
+                                  {q.options.map((option: string, optIdx: number) => (
+                                    <div 
+                                      key={optIdx}
+                                      className={`text-xs p-2 rounded ${
+                                        optIdx === q.correct 
+                                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                                          : 'bg-gray-50 text-gray-600'
+                                      }`}
+                                    >
+                                      {String.fromCharCode(65 + optIdx)}) {option}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Prayer Section */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold text-purple-600 flex items-center gap-2">
+                            🙏 Oração
+                          </h3>
+                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <p className="text-sm leading-relaxed italic">{day.prayer}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+
+              {/* Approve Button */}
+              <div className="flex justify-center pt-6 border-t">
+                <Button 
+                  onClick={() => {
+                    toast({
+                      title: "Conteúdo aprovado!",
+                      description: "Produto pronto para ser finalizado."
+                    });
+                  }}
+                  className="gradient-primary text-white px-8 py-3 text-lg"
+                >
+                  <Check className="h-5 w-5 mr-3" />
+                  Aprovar Conteúdo
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
 
   const isStepValid = () => {
     console.log("Verificando step:", currentStep, "ProductData:", productData);
