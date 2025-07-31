@@ -185,89 +185,105 @@ const DesignShowcase = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-full mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-3">Proposito24h - Design System</h1>
-          <p className="text-lg text-muted-foreground mb-2">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Proposito24h - Design System Showcase</h1>
+          <p className="text-xl text-muted-foreground mb-2">
             8 variações: Azul + Preto + Cinza médio/claro
           </p>
-          <p className="text-sm text-muted-foreground">
-            Escolha a combinação ideal para o projeto
+          <p className="text-muted-foreground">
+            Cada design system com a mistura perfeita das 3 cores
           </p>
         </div>
 
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {designVariations.map((variation) => (
             <div 
               key={variation.id}
-              className="border rounded-lg p-4 flex flex-col h-full overflow-hidden"
+              className="border rounded-lg p-6"
               style={applyColors(variation.colors)}
             >
               {/* Header */}
-              <div className="mb-4">
-                <h2 className="text-lg font-bold text-foreground mb-1">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                   {variation.name}
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground">
                   {variation.description}
                 </p>
               </div>
 
               {/* Color Palette */}
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold mb-2 text-foreground">Cores</h3>
-                <div className="grid grid-cols-2 gap-1">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3 text-foreground">Paleta de Cores</h3>
+                <div className="grid grid-cols-4 gap-2">
                   <div className="space-y-1">
-                    <div className="w-full h-4 rounded bg-primary"></div>
-                    <p className="text-xs text-muted-foreground">Primary</p>
+                    <div className="w-full h-8 rounded" style={{backgroundColor: `hsl(${variation.colors.primary})`}}></div>
+                    <p className="text-xs text-muted-foreground">Azul Primary</p>
                   </div>
                   <div className="space-y-1">
-                    <div className="w-full h-4 rounded bg-secondary"></div>
-                    <p className="text-xs text-muted-foreground">Secondary</p>
+                    <div className="w-full h-8 rounded" style={{backgroundColor: `hsl(${variation.colors.background})`}}></div>
+                    <p className="text-xs text-muted-foreground">Preto</p>
                   </div>
                   <div className="space-y-1">
-                    <div className="w-full h-4 rounded bg-accent"></div>
-                    <p className="text-xs text-muted-foreground">Accent</p>
+                    <div className="w-full h-8 rounded" style={{backgroundColor: `hsl(${variation.colors.secondary})`}}></div>
+                    <p className="text-xs text-muted-foreground">Cinza Médio</p>
                   </div>
                   <div className="space-y-1">
-                    <div className="w-full h-4 rounded bg-muted"></div>
-                    <p className="text-xs text-muted-foreground">Muted</p>
+                    <div className="w-full h-8 rounded" style={{backgroundColor: `hsl(${variation.colors.foreground})`}}></div>
+                    <p className="text-xs text-muted-foreground">Cinza Claro</p>
                   </div>
                 </div>
               </div>
 
               {/* Components Demo */}
-              <div className="flex-1 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Componentes</h3>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Componentes</h3>
                 
                 {/* Buttons */}
-                <div className="flex gap-1 flex-wrap">
-                  <Button size="sm">Primary</Button>
-                  <Button variant="secondary" size="sm">Second</Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button>Primary Button</Button>
+                  <Button variant="secondary">Secondary</Button>
+                  <Button variant="outline">Outline</Button>
                 </div>
 
-                {/* Mini Card Example */}
-                <Card className="flex-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Card Demo</CardTitle>
+                {/* Card Example */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Exemplo de Card</CardTitle>
+                    <CardDescription>
+                      Veja como fica com as cores aplicadas
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Input placeholder="Input..." className="h-8 text-xs" />
-                    <div className="flex gap-1">
-                      <Badge className="text-xs">Tag</Badge>
-                      <Badge variant="secondary" className="text-xs">Tag2</Badge>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <Input placeholder="Digite algo aqui..." />
+                      <div className="flex gap-2">
+                        <Badge>Azul</Badge>
+                        <Badge variant="secondary">Cinza</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Progresso: 75%</p>
+                        <Progress value={75} />
+                      </div>
                     </div>
-                    <Progress value={75} className="h-2" />
                   </CardContent>
                 </Card>
 
+                {/* Typography */}
+                <div className="space-y-2">
+                  <h4 className="text-lg font-semibold text-foreground">Tipografia</h4>
+                  <p className="text-foreground">Texto principal (cinza claro)</p>
+                  <p className="text-muted-foreground">Texto secundário (cinza médio)</p>
+                  <p className="text-primary">Texto destacado (azul)</p>
+                </div>
               </div>
 
               {/* Selection Button */}
-              <div className="mt-auto pt-3 border-t border-border">
-                <Button className="w-full" size="sm">
-                  Escolher
+              <div className="mt-6 pt-4 border-t border-border">
+                <Button className="w-full" size="lg">
+                  🎨 Escolher este Design System
                 </Button>
               </div>
             </div>
@@ -275,10 +291,17 @@ const DesignShowcase = () => {
         </div>
 
         {/* Instructions */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Cada quadrante mostra a mistura: Azul + Preto + Cinza médio/claro
-          </p>
+        <div className="mt-12 text-center">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-3">Como funciona?</h3>
+              <p className="text-muted-foreground">
+                Cada variação mostra como ficaria o design system completo do Proposito24h 
+                com a mistura perfeita de <strong>azul + preto + cinza médio/claro</strong>. 
+                Escolha a que mais combina com a vibe do projeto!
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
