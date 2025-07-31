@@ -26,59 +26,18 @@ import {
 const products = [
   {
     id: 1,
-    name: "Transformação 24h - Premium",
-    description: "Versão premium da experiência mais vendida",
+    name: "Transformação em 21 Dias",
+    description: "Experiência devocional completa para transformar sua vida espiritual em 21 dias",
     price: "R$ 97,00",
     stock: "Ilimitado",
-    sales: 247,
-    revenue: "R$ 23.959",
-    conversion: "3.8%",
+    sales: 347,
+    revenue: "R$ 33.659",
+    conversion: "24.8%",
     status: "Ativo",
     category: "Experiência",
     createdAt: "2024-01-15",
-    trend: "up"
-  },
-  {
-    id: 2,
-    name: "Foco Total - Standard",
-    description: "Experiência de produtividade básica",
-    price: "R$ 67,00",
-    stock: "Ilimitado",
-    sales: 189,
-    revenue: "R$ 12.663",
-    conversion: "4.2%",
-    status: "Ativo",
-    category: "Experiência",
-    createdAt: "2024-01-10",
-    trend: "up"
-  },
-  {
-    id: 3,
-    name: "Kit Bem-estar Digital",
-    description: "Bundle com 3 experiências de bem-estar",
-    price: "R$ 147,00",
-    stock: "Ilimitado",
-    sales: 89,
-    revenue: "R$ 13.083",
-    conversion: "2.1%",
-    status: "Ativo",
-    category: "Bundle",
-    createdAt: "2024-01-05",
-    trend: "down"
-  },
-  {
-    id: 4,
-    name: "Energia Renovada - Beta",
-    description: "Nova experiência em fase de teste",
-    price: "R$ 47,00",
-    stock: "100 unidades",
-    sales: 23,
-    revenue: "R$ 1.081",
-    conversion: "1.8%",
-    status: "Teste",
-    category: "Experiência",
-    createdAt: "2024-01-20",
-    trend: "up"
+    trend: "up",
+    slug: "transformacao-21-dias"
   }
 ];
 
@@ -325,7 +284,12 @@ export default function Produtos() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-3 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => window.open(`/produto/${product.slug}`, '_blank')}
+                  >
                     <Eye className="h-3 w-3 mr-1" />
                     Ver
                   </Button>

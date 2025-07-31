@@ -17,6 +17,9 @@ import ExperienciaDevocional from "./pages/admin/ExperienciaDevocional";
 import Vendas from "./pages/admin/Vendas";
 import Financeiro from "./pages/admin/Financeiro";
 import Configuracoes from "./pages/admin/Configuracoes";
+import ProductLanding from "./pages/public/ProductLanding";
+import ProductCheckout from "./pages/public/ProductCheckout";
+import AppMain from "./pages/app/AppMain";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +40,13 @@ const App = (): React.ReactElement => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/design-showcase" element={<DesignShowcase />} />
+          
+          {/* Public Product Routes */}
+          <Route path="/produto/:slug" element={<ProductLanding />} />
+          <Route path="/produto/:slug/checkout" element={<ProductCheckout />} />
+          
+          {/* App Routes */}
+          <Route path="/app/*" element={<AppMain />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
