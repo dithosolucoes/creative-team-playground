@@ -15,15 +15,27 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const email = formData.get('email') as string;
+    
     setIsLoading(true);
     
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao Propósito24h",
-      });
-    }, 1200);
+    // Simple auth check - replace with real auth later
+    if (email === 'admin@proposito24h.com') {
+      setTimeout(() => {
+        setIsLoading(false);
+        window.location.href = '/admin/dashboard';
+      }, 1200);
+    } else {
+      setTimeout(() => {
+        setIsLoading(false);
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Bem-vindo ao Propósito24h",
+        });
+      }, 1200);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -94,6 +106,7 @@ const Login = () => {
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="login-email"
+                        name="email"
                         type="email"
                         placeholder="seu@email.com"
                         required

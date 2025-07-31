@@ -8,6 +8,13 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DesignShowcase from "./pages/DesignShowcase";
 import Login from "./pages/Login";
+import AdminLayout from "./layouts/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import Produtos from "./pages/admin/Produtos";
+import Experiencias from "./pages/admin/Experiencias";
+import Vendas from "./pages/admin/Vendas";
+import Financeiro from "./pages/admin/Financeiro";
+import Configuracoes from "./pages/admin/Configuracoes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +35,17 @@ const App = (): React.ReactElement => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/design-showcase" element={<DesignShowcase />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="produtos" element={<Produtos />} />
+            <Route path="experiencias" element={<Experiencias />} />
+            <Route path="vendas" element={<Vendas />} />
+            <Route path="financeiro" element={<Financeiro />} />
+            <Route path="configuracoes" element={<Configuracoes />} />
+          </Route>
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
