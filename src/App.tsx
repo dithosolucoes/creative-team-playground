@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Produtos from "./pages/admin/Produtos";
+import ProdutoCriar from "./pages/admin/ProdutoCriar";
 import Experiencias from "./pages/admin/Experiencias";
 import ExperienciaDevocional from "./pages/admin/ExperienciaDevocional";
 import Vendas from "./pages/admin/Vendas";
@@ -41,6 +42,7 @@ const App = (): React.ReactElement => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="produtos" element={<Produtos />} />
+            <Route path="produtos/criar" element={<ProdutoCriar />} />
             <Route path="experiencias" element={<Experiencias />} />
             <Route path="experiencias/devocional" element={<ExperienciaDevocional />} />
             <Route path="vendas" element={<Vendas />} />

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,6 +86,7 @@ export default function Produtos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todas");
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const navigate = useNavigate();
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -118,7 +120,10 @@ export default function Produtos() {
             Gerencie seus produtos e acompanhe performance em tempo real
           </p>
         </div>
-        <Button className="gap-2 gradient-primary text-white shadow-primary">
+        <Button 
+          className="gap-2 gradient-primary text-white shadow-primary"
+          onClick={() => navigate("/admin/produtos/criar")}
+        >
           <Plus className="h-4 w-4" />
           Criar Produto
         </Button>
