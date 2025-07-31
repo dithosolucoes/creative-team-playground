@@ -240,36 +240,40 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4">
-          <Card 
-            className={`cursor-pointer transition-all duration-200 ${
-              productData.experienceId === "devocional" 
-                ? "border-primary bg-primary/5" 
-                : "border-border hover:border-primary/50"
-            }`}
-            onClick={() => updateProductData("experienceId", "devocional")}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <Heart className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">Experiência Devocional</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Jornada espiritual com devocionais diários, passagens bíblicas e reflexões
-                  </p>
-                  <div className="flex gap-2 mt-3">
-                    <Badge variant="outline">Devocional</Badge>
-                    <Badge variant="outline">Reflexão</Badge>
-                    <Badge variant="outline">Oração</Badge>
+            <Card 
+              className={`cursor-pointer transition-all duration-200 ${
+                productData.experienceId === "devocional" 
+                  ? "border-primary bg-primary/5" 
+                  : "border-border hover:border-primary/50"
+              }`}
+              onClick={() => {
+                console.log("Experiência selecionada: devocional");
+                updateProductData("experienceId", "devocional");
+                console.log("ProductData após seleção:", { ...productData, experienceId: "devocional" });
+              }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <Heart className="h-6 w-6 text-primary" />
                   </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">Experiência Devocional</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Jornada espiritual com devocionais diários, passagens bíblicas e reflexões
+                    </p>
+                    <div className="flex gap-2 mt-3">
+                      <Badge variant="outline">Devocional</Badge>
+                      <Badge variant="outline">Reflexão</Badge>
+                      <Badge variant="outline">Oração</Badge>
+                    </div>
+                  </div>
+                  {productData.experienceId === "devocional" && (
+                    <Check className="h-5 w-5 text-primary" />
+                  )}
                 </div>
-                {productData.experienceId === "devocional" && (
-                  <Check className="h-5 w-5 text-primary" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </div>
       </CardContent>
     </Card>
@@ -682,8 +686,12 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
   );
 
   const isStepValid = () => {
+    console.log("Verificando step:", currentStep, "ProductData:", productData);
     switch (currentStep) {
-      case 1: return !!productData.experienceId;
+      case 1: 
+        const valid1 = !!productData.experienceId;
+        console.log("Step 1 válido:", valid1, "experienceId:", productData.experienceId);
+        return valid1;
       case 2: return !!(productData.title && productData.description && productData.price && productData.category);
       case 3: return !!productData.template;
       case 4: return true; // Colors and fonts are optional
@@ -754,7 +762,12 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
           </Button>
         ) : (
           <Button 
-            onClick={nextStep}
+            onClick={() => {
+              console.log("Tentando avançar para próximo step");
+              console.log("Step atual:", currentStep);
+              console.log("Step válido:", isStepValid());
+              nextStep();
+            }}
             disabled={!isStepValid()}
             className="gradient-primary text-white"
           >
