@@ -31,13 +31,18 @@ All colors MUST be HSL.
     --ring: 210 100% 50%;
     --radius: 0.75rem;
     
-    /* Custom black theme colors */
-    --sidebar-bg: 0 0% 5%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-active: 210 100% 50%;
-    --sidebar-active-foreground: 0 0% 98%;
-    --header-bg: 0 0% 5%;
-    --header-foreground: 0 0% 98%;
+    /* Custom theme colors */
+    --black: 0 0% 0%;
+    --blue-primary: 210 100% 50%;
+    --gray-dark: 0 0% 15%;
+    --gray-light: 0 0% 96%;
+    
+    /* Semantic tokens */
+    --sidebar-header-bg: var(--black);
+    --sidebar-content-bg: var(--gray-light);
+    --sidebar-button-bg: var(--black);
+    --sidebar-button-active: var(--blue-primary);
+    --main-header-bg: var(--black);
   }
 
   .dark {
