@@ -84,7 +84,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      payment_method_types: ["card", "pix"], // PIX + Card support
+      payment_method_types: ["card"], // Temporarily only card - reactivate PIX after enabling in Stripe Dashboard
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&product=${productSlug}`,
       cancel_url: `${origin}/checkout/${productSlug}`,
       metadata: {
