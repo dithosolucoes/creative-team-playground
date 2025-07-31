@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export default function AdminLayout() {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen w-full bg-background flex">
         <AppSidebar />
         
         <div className="flex-1 flex flex-col">

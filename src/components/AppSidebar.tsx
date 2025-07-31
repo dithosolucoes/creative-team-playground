@@ -42,8 +42,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={`${isCollapsed ? "w-16" : "w-72"} border-r transition-all duration-300`}>
-      {/* BLACK HEADER */}
-      <SidebarHeader className="border-b px-6 py-8" style={{ backgroundColor: "hsl(var(--black))", borderColor: "hsl(0 0% 15%)" }}>
+      {/* BLACK HEADER - SAME HEIGHT AS MAIN HEADER */}
+      <SidebarHeader className="border-b px-6 h-20 flex items-center" style={{ backgroundColor: "hsl(var(--black))", borderColor: "hsl(0 0% 15%)" }}>
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: "hsl(var(--blue-primary))" }}>
             <span className="text-white font-bold text-lg">24h</span>
