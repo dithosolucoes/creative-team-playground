@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,14 +12,19 @@ import {
   CheckCircle,
   Lock,
   ArrowLeft,
-  Smartphone
+  Smartphone,
+  Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ProductCheckout() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [product, setProduct] = useState<any>(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -32,12 +37,45 @@ export default function ProductCheckout() {
   
   const [loading, setLoading] = useState(false);
 
-  const product = {
-    title: "Transformação em 21 Dias",
-    price: 97,
-    originalPrice: 197,
-    description: "Experiência devocional completa"
-  };
+  // Fetch product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!slug) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", slug)
+          .eq("is_active", true)
+          .single();
+
+        if (error || !data) {
+          toast({
+            title: "Produto não encontrado",
+            description: "O produto solicitado não existe ou não está disponível.",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
+
+        setProduct(data);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar produto.",
+          variant: "destructive",
+        });
+        navigate("/");
+      } finally {
+        setIsLoadingProduct(false);
+      }
+    };
+
+    fetchProduct();
+  }, [slug, navigate, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -59,27 +97,107 @@ export default function ProductCheckout() {
     }
 
     setLoading(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "Pagamento aprovado!",
-        description: "Bem-vindo à sua jornada de transformação",
-      });
-      
-      // Store user data in localStorage (mock authentication)
-      localStorage.setItem('user', JSON.stringify({
-        name: formData.name,
+
+    try {
+      // Create user account first
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
-        product: product.title,
-        purchaseDate: new Date().toISOString()
-      }));
-      
-      // Redirect to app
-      navigate('/app');
-    }, 2000);
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: formData.name,
+            cpf: formData.cpf,
+            phone: formData.phone,
+          }
+        }
+      });
+
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          // Try to sign in instead
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password,
+          });
+          
+          if (signInError) {
+            throw new Error("Usuário já existe. Verifique sua senha ou use a opção 'Esqueci minha senha'.");
+          }
+        } else {
+          throw authError;
+        }
+      }
+
+      // Create or update profile
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            user_id: authData.user.id,
+            email: formData.email,
+            name: formData.name,
+            cpf: formData.cpf,
+            phone: formData.phone,
+          }, { onConflict: "user_id" });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+        }
+      }
+
+      // Create checkout session
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          productSlug: slug,
+          userData: {
+            email: formData.email,
+            name: formData.name,
+            cpf: formData.cpf,
+            phone: formData.phone,
+          }
+        }
+      });
+
+      if (checkoutError || !checkoutData?.url) {
+        throw new Error(checkoutError?.message || "Erro ao criar sessão de pagamento");
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = checkoutData.url;
+
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      toast({
+        title: "Erro no checkout",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (isLoadingProduct) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando produto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Produto não encontrado.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
@@ -87,7 +205,7 @@ export default function ProductCheckout() {
       <div className="container mx-auto max-w-4xl mb-8">
         <Button 
           variant="ghost" 
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/produto/${slug}`)}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -204,35 +322,42 @@ export default function ProductCheckout() {
                     </div>
                   </div>
 
-                  {/* Payment Method */}
+                  {/* Payment Method Info */}
                   <Separator />
                   
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-foreground">
-                      Forma de Pagamento
+                      Formas de Pagamento Disponíveis
                     </h3>
                     
                     <div className="grid gap-3">
-                      <Card className="border-primary bg-primary/5 cursor-pointer">
+                      <Card className="border-primary bg-primary/5">
                         <CardContent className="p-4 flex items-center gap-3">
                           <CreditCard className="h-5 w-5 text-primary" />
                           <div className="flex-1">
                             <p className="font-medium text-foreground">Cartão de Crédito</p>
                             <p className="text-sm text-muted-foreground">Aprovação imediata</p>
                           </div>
-                          <Badge variant="secondary">Recomendado</Badge>
+                          <Badge variant="secondary">Disponível</Badge>
                         </CardContent>
                       </Card>
                       
-                      <Card className="border-muted cursor-pointer opacity-75">
+                      <Card className="border-primary bg-primary/5">
                         <CardContent className="p-4 flex items-center gap-3">
-                          <Smartphone className="h-5 w-5 text-muted-foreground" />
+                          <Smartphone className="h-5 w-5 text-primary" />
                           <div className="flex-1">
-                            <p className="font-medium text-muted-foreground">PIX</p>
+                            <p className="font-medium text-foreground">PIX</p>
                             <p className="text-sm text-muted-foreground">Aprovação em até 2h</p>
                           </div>
+                          <Badge variant="secondary">Disponível</Badge>
                         </CardContent>
                       </Card>
+                    </div>
+                    
+                    <div className="text-xs text-center text-muted-foreground space-y-1 bg-blue-50 p-3 rounded-lg">
+                      <p>✅ Pagamento com <strong>PIX</strong> ou <strong>Cartão</strong></p>
+                      <p>✅ Ambiente 100% seguro (Stripe)</p>
+                      <p>✅ Aprovação instantânea</p>
                     </div>
                   </div>
 
@@ -242,7 +367,7 @@ export default function ProductCheckout() {
                     className="w-full text-lg py-6"
                     disabled={loading}
                   >
-                    {loading ? "Processando..." : `Finalizar Compra - R$ ${product.price}`}
+                    {loading ? "Criando conta..." : "Ir para Pagamento"}
                   </Button>
                 </form>
               </CardContent>
@@ -263,19 +388,35 @@ export default function ProductCheckout() {
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Valor original:</span>
-                    <span className="line-through text-muted-foreground">R$ {product.originalPrice}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Desconto:</span>
-                    <span className="text-success">-R$ {product.originalPrice - product.price}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total:</span>
-                    <span className="text-primary">R$ {product.price}</span>
-                  </div>
+                <div className="flex items-center justify-between text-lg font-semibold">
+                  <span>Preço:</span>
+                  <span className="text-primary">
+                    R$ {(product.price / 100).toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h4 className="font-medium mb-2">✨ Experiência Transformadora:</h4>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li className="flex items-center">
+                      <Star className="w-3 h-3 mr-2 text-yellow-500 fill-current" />
+                      21 dias de conteúdo exclusivo
+                    </li>
+                    <li className="flex items-center">
+                      <Star className="w-3 h-3 mr-2 text-yellow-500 fill-current" />
+                      Acesso vitalício ao app
+                    </li>
+                    <li className="flex items-center">
+                      <Star className="w-3 h-3 mr-2 text-yellow-500 fill-current" />
+                      Acompanhamento de progresso
+                    </li>
+                    <li className="flex items-center">
+                      <Star className="w-3 h-3 mr-2 text-yellow-500 fill-current" />
+                      Certificado de conclusão
+                    </li>
+                  </ul>
                 </div>
 
                 <Separator />

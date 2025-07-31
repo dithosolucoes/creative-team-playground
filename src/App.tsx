@@ -19,6 +19,7 @@ import Financeiro from "./pages/admin/Financeiro";
 import Configuracoes from "./pages/admin/Configuracoes";
 import ProductLanding from "./pages/public/ProductLanding";
 import ProductCheckout from "./pages/public/ProductCheckout";
+import PaymentSuccess from "./pages/public/PaymentSuccess";
 import AppMain from "./pages/app/AppMain";
 
 const queryClient = new QueryClient({
@@ -44,6 +45,7 @@ const App = (): React.ReactElement => (
           {/* Public Product Routes */}
           <Route path="/produto/:slug" element={<ProductLanding />} />
           <Route path="/produto/:slug/checkout" element={<ProductCheckout />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           
           {/* App Routes */}
           <Route path="/app/*" element={<AppMain />} />
