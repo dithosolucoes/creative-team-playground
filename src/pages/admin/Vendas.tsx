@@ -186,16 +186,21 @@ export default function Vendas() {
             </Button>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {funnels.map((funnel) => (
-              <Card key={funnel.id} className="shadow-soft border-soft">
+              <Card key={funnel.id} className="shadow-soft border-soft hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-foreground">{funnel.name}</CardTitle>
-                      <CardDescription>
-                        {funnel.products.join(" → ")}
-                      </CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <BarChart3 className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-foreground">{funnel.name}</CardTitle>
+                        <CardDescription className="text-sm">
+                          {funnel.products.join(" → ")}
+                        </CardDescription>
+                      </div>
                     </div>
                     <Badge 
                       variant={funnel.status === "Ativo" ? "default" : "secondary"}
@@ -206,28 +211,28 @@ export default function Vendas() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
                     <div>
                       <p className="text-sm text-muted-foreground">Visitantes</p>
-                      <p className="text-2xl font-bold text-foreground">{funnel.visitors.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-foreground">{funnel.visitors.toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Conversões</p>
-                      <p className="text-2xl font-bold text-foreground">{funnel.purchases}</p>
+                      <p className="text-xl font-bold text-foreground">{funnel.purchases}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Taxa Conversão</p>
-                      <p className="text-2xl font-bold text-foreground">{funnel.conversion}%</p>
+                      <p className="text-xl font-bold text-primary">{funnel.conversion}%</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Receita</p>
-                      <p className="text-2xl font-bold text-foreground">{funnel.revenue}</p>
+                      <p className="text-xl font-bold text-success">{funnel.revenue}</p>
                     </div>
                   </div>
-                  <div className="mt-6 flex gap-3">
-                    <Button variant="outline" size="sm">Ver Analytics</Button>
-                    <Button variant="outline" size="sm">Editar Funil</Button>
-                    <Button variant="outline" size="sm">Duplicar</Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1">Ver Analytics</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Editar</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Duplicar</Button>
                   </div>
                 </CardContent>
               </Card>

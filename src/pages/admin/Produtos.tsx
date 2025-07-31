@@ -218,108 +218,111 @@ export default function Produtos() {
         </Card>
       )}
 
-      {/* Products Table */}
-      <Card className="shadow-soft border-soft">
-        <CardHeader>
-          <CardTitle className="text-foreground">Lista de Produtos</CardTitle>
-          <CardDescription>
-            Gerencie e monitore a performance de todos os seus produtos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox 
-                    checked={selectedProducts.length === filteredProducts.length}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Preço</TableHead>
-                <TableHead>Vendas</TableHead>
-                <TableHead>Receita</TableHead>
-                <TableHead>Conversão</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id} className="hover:bg-muted/50">
-                  <TableCell>
+      {/* Products Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredProducts.map((product) => (
+          <Card key={product.id} className="shadow-soft border-soft hover:shadow-lg transition-all duration-300">
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
                     <Checkbox 
                       checked={selectedProducts.includes(product.id)}
                       onCheckedChange={() => handleSelectProduct(product.id)}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">{product.name}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {product.description}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {product.category}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(product.createdAt).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-medium text-foreground">{product.price}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{product.sales}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {product.category}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg text-foreground line-clamp-2">
+                    {product.name}
+                  </CardTitle>
+                  <CardDescription className="text-sm line-clamp-2 mt-1">
+                    {product.description}
+                  </CardDescription>
+                </div>
+                <Button variant="ghost" size="icon" className="flex-shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-0">
+              <div className="space-y-4">
+                {/* Price and Status */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{product.price}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Criado em {new Date(product.createdAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <Badge 
+                    variant={
+                      product.status === "Ativo" ? "default" :
+                      product.status === "Teste" ? "secondary" : "outline"
+                    }
+                    className={
+                      product.status === "Ativo" ? "bg-success text-white" :
+                      product.status === "Teste" ? "bg-warning text-white" : ""
+                    }
+                  >
+                    {product.status}
+                  </Badge>
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-2 gap-4 py-3 border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Vendas</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-lg font-semibold text-foreground">{product.sales}</p>
                       {product.trend === "up" ? (
-                        <TrendingUp className="h-4 w-4 text-success" />
+                        <TrendingUp className="h-3 w-3 text-success" />
                       ) : (
-                        <TrendingDown className="h-4 w-4 text-destructive" />
+                        <TrendingDown className="h-3 w-3 text-destructive" />
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-medium text-foreground">{product.revenue}</span>
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Receita</p>
+                    <p className="text-lg font-semibold text-foreground">{product.revenue}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Conversão</p>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{product.conversion}</span>
+                      <p className="text-sm font-medium text-foreground">{product.conversion}</p>
                       <div className={`w-2 h-2 rounded-full ${
                         parseFloat(product.conversion) > 3 ? 'bg-success' :
                         parseFloat(product.conversion) > 2 ? 'bg-warning' : 'bg-destructive'
                       }`} />
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        product.status === "Ativo" ? "default" :
-                        product.status === "Teste" ? "secondary" : "outline"
-                      }
-                      className={
-                        product.status === "Ativo" ? "bg-success text-white" :
-                        product.status === "Teste" ? "bg-warning text-white" : ""
-                      }
-                    >
-                      {product.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Estoque</p>
+                    <p className="text-sm font-medium text-foreground">{product.stock}</p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-3 border-t border-border">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Eye className="h-3 w-3 mr-1" />
+                    Ver
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Edit className="h-3 w-3 mr-1" />
+                    Editar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
