@@ -763,16 +763,25 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
         ) : (
           <Button 
             onClick={() => {
-              console.log("Tentando avançar para próximo step");
-              console.log("Step atual:", currentStep);
-              console.log("Step válido:", isStepValid());
-              nextStep();
+              console.log("Clicou em Próximo - Step atual:", currentStep);
+              console.log("ProductData atual:", productData);
+              console.log("isStepValid retorna:", isStepValid());
+              if (isStepValid()) {
+                nextStep();
+                console.log("Avançou para step:", currentStep + 1);
+              } else {
+                console.log("Step inválido, não pode avançar");
+              }
             }}
             disabled={!isStepValid()}
-            className="gradient-primary text-white"
+            className={`gap-2 ${
+              isStepValid() 
+                ? "gradient-primary text-white" 
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            }`}
           >
             Próximo
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
           </Button>
         )}
       </div>

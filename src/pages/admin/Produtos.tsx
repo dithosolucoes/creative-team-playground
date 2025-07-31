@@ -120,13 +120,18 @@ export default function Produtos() {
             Gerencie seus produtos e acompanhe performance em tempo real
           </p>
         </div>
-        <Button 
-          className="gap-2 gradient-primary text-white shadow-primary"
-          onClick={() => navigate("/admin/produtos/criar")}
-        >
-          <Plus className="h-4 w-4" />
-          Criar Produto
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => {
+              console.log("Navegando para criar produto");
+              navigate("/admin/produtos/criar");
+            }}
+            className="gap-2 gradient-primary text-white shadow-primary"
+          >
+            <Plus className="h-4 w-4" />
+            Criar Produto
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats */}
