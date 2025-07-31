@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, 
   Search, 
@@ -23,45 +24,23 @@ import {
 const experiences = [
   {
     id: 1,
-    title: "Transformação 24h",
-    description: "Uma jornada completa de autodescoberta e transformação pessoal",
+    title: "Devocional",
+    description: "Uma experiência de crescimento espiritual através de devocionais diários, passagens bíblicas, quiz e orações",
     status: "Ativa",
-    participants: 247,
-    rating: 4.8,
-    revenue: "R$ 12.350",
-    template: "Mindfulness",
-    createdAt: "2024-01-15",
-    thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop"
-  },
-  {
-    id: 2,
-    title: "Foco Total",
-    description: "Desenvolva concentração máxima e produtividade em 24 horas",
-    status: "Ativa",
-    participants: 189,
-    rating: 4.9,
-    revenue: "R$ 9.450",
-    template: "Produtividade",
-    createdAt: "2024-01-10",
-    thumbnail: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=400&h=250&fit=crop"
-  },
-  {
-    id: 3,
-    title: "Energia Renovada",
-    description: "Recupere sua vitalidade e energia através de práticas holísticas",
-    status: "Rascunho",
     participants: 0,
     rating: 0,
     revenue: "R$ 0",
-    template: "Bem-estar",
-    createdAt: "2024-01-20",
-    thumbnail: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=250&fit=crop"
+    template: "Espiritual",
+    createdAt: "2024-01-31",
+    thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop",
+    slug: "devocional"
   }
 ];
 
 export default function Experiencias() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Todas");
+  const navigate = useNavigate();
 
   const filteredExperiences = experiences.filter(exp => {
     const matchesSearch = exp.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -146,7 +125,7 @@ export default function Experiencias() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Total de Experiências</p>
-                <p className="text-2xl font-bold text-foreground">12</p>
+                <p className="text-2xl font-bold text-foreground">1</p>
               </div>
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-primary" />
@@ -160,7 +139,7 @@ export default function Experiencias() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Participantes Ativos</p>
-                <p className="text-2xl font-bold text-foreground">1.247</p>
+                <p className="text-2xl font-bold text-foreground">0</p>
               </div>
               <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
                 <Users className="h-6 w-6 text-success" />
@@ -174,7 +153,7 @@ export default function Experiencias() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Avaliação Média</p>
-                <p className="text-2xl font-bold text-foreground">4.8</p>
+                <p className="text-2xl font-bold text-foreground">-</p>
               </div>
               <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
                 <Star className="h-6 w-6 text-warning" />
@@ -254,7 +233,12 @@ export default function Experiencias() {
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1 gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 gap-2"
+                  onClick={() => navigate(`/admin/experiencias/${experience.slug}`)}
+                >
                   <Eye className="h-4 w-4" />
                   Visualizar
                 </Button>

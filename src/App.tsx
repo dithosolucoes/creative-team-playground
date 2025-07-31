@@ -12,6 +12,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Produtos from "./pages/admin/Produtos";
 import Experiencias from "./pages/admin/Experiencias";
+import ExperienciaDevocional from "./pages/admin/ExperienciaDevocional";
 import Vendas from "./pages/admin/Vendas";
 import Financeiro from "./pages/admin/Financeiro";
 import Configuracoes from "./pages/admin/Configuracoes";
@@ -41,6 +42,7 @@ const App = (): React.ReactElement => (
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="produtos" element={<Produtos />} />
             <Route path="experiencias" element={<Experiencias />} />
+            <Route path="experiencias/devocional" element={<ExperienciaDevocional />} />
             <Route path="vendas" element={<Vendas />} />
             <Route path="financeiro" element={<Financeiro />} />
             <Route path="configuracoes" element={<Configuracoes />} />
