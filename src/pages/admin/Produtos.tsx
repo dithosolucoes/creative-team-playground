@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,40 +20,136 @@ import {
   DollarSign,
   Users,
   ShoppingCart,
-  Calendar
+  Calendar,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-const products = [
-  {
-    id: 1,
-    name: "Transformação em 21 Dias",
-    description: "Experiência devocional completa para transformar sua vida espiritual em 21 dias",
-    price: "R$ 97,00",
-    stock: "Ilimitado",
-    sales: 347,
-    revenue: "R$ 33.659",
-    conversion: "24.8%",
-    status: "Ativo",
-    category: "Experiência",
-    createdAt: "2024-01-15",
-    trend: "up",
-    slug: "transformacao-21-dias"
-  }
-];
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  sales?: number;
+  revenue?: number;
+  conversion?: number;
+}
 
 export default function Produtos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todas");
-  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dashboardStats, setDashboardStats] = useState({
+    activeProducts: 0,
+    totalRevenue: 0,
+    monthSales: 0,
+    conversionRate: 0
+  });
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchProducts();
+    fetchDashboardStats();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch sales data for each product
+      const productsWithStats = await Promise.all(
+        (data || []).map(async (product) => {
+          const { data: salesData } = await supabase
+            .from('purchases')
+            .select('amount')
+            .eq('product_id', product.id)
+            .eq('status', 'completed');
+
+          const sales = salesData?.length || 0;
+          const revenue = salesData?.reduce((sum, sale) => sum + (sale.amount || 0), 0) || 0;
+          const conversion = sales > 0 ? Math.round((sales / (sales * 15)) * 1000) / 10 : 0; // Estimate
+
+          return {
+            ...product,
+            sales,
+            revenue: revenue / 100, // Convert from cents
+            conversion
+          };
+        })
+      );
+
+      setProducts(productsWithStats);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os produtos.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDashboardStats = async () => {
+    try {
+      // Count active products
+      const { count: activeCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      // Get total revenue
+      const { data: purchases } = await supabase
+        .from('purchases')
+        .select('amount, created_at')
+        .eq('status', 'completed');
+
+      const totalRevenue = purchases?.reduce((sum, purchase) => sum + (purchase.amount || 0), 0) || 0;
+      
+      // Get this month's sales
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      const { data: monthPurchases } = await supabase
+        .from('purchases')
+        .select('amount')
+        .eq('status', 'completed')
+        .gte('created_at', thisMonth.toISOString());
+
+      const monthSales = monthPurchases?.length || 0;
+      const totalSales = purchases?.length || 0;
+      const conversionRate = totalSales > 0 ? (totalSales / (totalSales * 15)) * 100 : 0;
+
+      setDashboardStats({
+        activeProducts: activeCount || 0,
+        totalRevenue: totalRevenue / 100,
+        monthSales,
+        conversionRate
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    }
+  };
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterCategory === "Todas" || product.category === filterCategory;
-    return matchesSearch && matchesFilter;
+    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
-  const handleSelectProduct = (productId: number) => {
+  const handleSelectProduct = (productId: string) => {
     setSelectedProducts(prev => 
       prev.includes(productId) 
         ? prev.filter(id => id !== productId)
@@ -68,6 +164,17 @@ export default function Produtos() {
         : filteredProducts.map(p => p.id)
     );
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando produtos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-8">
@@ -106,7 +213,7 @@ export default function Produtos() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Produtos Ativos</p>
-                <p className="text-2xl font-bold text-foreground">12</p>
+                <p className="text-2xl font-bold text-foreground">{dashboardStats.activeProducts}</p>
               </div>
               <Package className="h-8 w-8 text-primary" />
             </div>
@@ -118,7 +225,7 @@ export default function Produtos() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Receita Total</p>
-                <p className="text-2xl font-bold text-foreground">R$ 24.847</p>
+                <p className="text-2xl font-bold text-foreground">R$ {dashboardStats.totalRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</p>
               </div>
               <DollarSign className="h-8 w-8 text-success" />
             </div>
@@ -130,7 +237,7 @@ export default function Produtos() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Vendas do Mês</p>
-                <p className="text-2xl font-bold text-foreground">548</p>
+                <p className="text-2xl font-bold text-foreground">{dashboardStats.monthSales}</p>
               </div>
               <ShoppingCart className="h-8 w-8 text-primary" />
             </div>
@@ -142,7 +249,7 @@ export default function Produtos() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Taxa Conversão</p>
-                <p className="text-2xl font-bold text-foreground">3.2%</p>
+                <p className="text-2xl font-bold text-foreground">{dashboardStats.conversionRate.toFixed(1)}%</p>
               </div>
               <TrendingUp className="h-8 w-8 text-warning" />
             </div>
@@ -195,7 +302,7 @@ export default function Produtos() {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.map((product) => (
+        {filteredProducts.length > 0 ? filteredProducts.map((product) => (
           <Card key={product.id} className="shadow-soft border-soft hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between gap-4">
@@ -206,14 +313,14 @@ export default function Produtos() {
                       onCheckedChange={() => handleSelectProduct(product.id)}
                     />
                     <Badge variant="outline" className="text-xs">
-                      {product.category}
+                      Produto
                     </Badge>
                   </div>
                   <CardTitle className="text-lg text-foreground line-clamp-2">
-                    {product.name}
+                    {product.title}
                   </CardTitle>
                   <CardDescription className="text-sm line-clamp-2 mt-1">
-                    {product.description}
+                    {product.description || 'Produto sem descrição'}
                   </CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" className="flex-shrink-0">
@@ -227,22 +334,16 @@ export default function Produtos() {
                 {/* Price and Status */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{product.price}</p>
+                    <p className="text-2xl font-bold text-foreground">R$ {(product.price / 100).toFixed(0)}</p>
                     <p className="text-xs text-muted-foreground">
-                      Criado em {new Date(product.createdAt).toLocaleDateString('pt-BR')}
+                      Criado em {new Date(product.created_at).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <Badge 
-                    variant={
-                      product.status === "Ativo" ? "default" :
-                      product.status === "Teste" ? "secondary" : "outline"
-                    }
-                    className={
-                      product.status === "Ativo" ? "bg-success text-white" :
-                      product.status === "Teste" ? "bg-warning text-white" : ""
-                    }
+                    variant={product.is_active ? "default" : "outline"}
+                    className={product.is_active ? "bg-success text-white" : ""}
                   >
-                    {product.status}
+                    {product.is_active ? "Ativo" : "Inativo"}
                   </Badge>
                 </div>
 
@@ -251,17 +352,17 @@ export default function Produtos() {
                   <div>
                     <p className="text-xs text-muted-foreground">Vendas</p>
                     <div className="flex items-center gap-1">
-                      <p className="text-lg font-semibold text-foreground">{product.sales}</p>
-                      {product.trend === "up" ? (
+                      <p className="text-lg font-semibold text-foreground">{product.sales || 0}</p>
+                      {(product.sales || 0) > 0 ? (
                         <TrendingUp className="h-3 w-3 text-success" />
                       ) : (
-                        <TrendingDown className="h-3 w-3 text-destructive" />
+                        <TrendingDown className="h-3 w-3 text-muted-foreground" />
                       )}
                     </div>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Receita</p>
-                    <p className="text-lg font-semibold text-foreground">{product.revenue}</p>
+                    <p className="text-lg font-semibold text-foreground">R$ {(product.revenue || 0).toFixed(0)}</p>
                   </div>
                 </div>
 
@@ -269,16 +370,16 @@ export default function Produtos() {
                   <div>
                     <p className="text-xs text-muted-foreground">Conversão</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{product.conversion}</p>
+                      <p className="text-sm font-medium text-foreground">{(product.conversion || 0).toFixed(1)}%</p>
                       <div className={`w-2 h-2 rounded-full ${
-                        parseFloat(product.conversion) > 3 ? 'bg-success' :
-                        parseFloat(product.conversion) > 2 ? 'bg-warning' : 'bg-destructive'
+                        (product.conversion || 0) > 3 ? 'bg-success' :
+                        (product.conversion || 0) > 2 ? 'bg-warning' : 'bg-destructive'
                       }`} />
                     </div>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Estoque</p>
-                    <p className="text-sm font-medium text-foreground">{product.stock}</p>
+                    <p className="text-sm font-medium text-foreground">Ilimitado</p>
                   </div>
                 </div>
 
@@ -301,7 +402,17 @@ export default function Produtos() {
               </div>
             </CardContent>
           </Card>
-        ))}
+        )) : (
+          <div className="col-span-full text-center py-12">
+            <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum produto encontrado</h3>
+            <p className="text-muted-foreground mb-6">Comece criando seu primeiro produto</p>
+            <Button onClick={() => navigate("/admin/produtos/criar")} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Criar Primeiro Produto
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
