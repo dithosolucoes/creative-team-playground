@@ -18,6 +18,7 @@ import Vendas from "./pages/admin/Vendas";
 import Financeiro from "./pages/admin/Financeiro";
 import Configuracoes from "./pages/admin/Configuracoes";
 import ProductLanding from "./pages/public/ProductLanding";
+import ExperienciaCriar from "@/pages/admin/ExperienciaCriar";
 import ProductCheckout from "./pages/public/ProductCheckout";
 import PaymentSuccess from "./pages/public/PaymentSuccess";
 import AppMain from "./pages/app/AppMain";
@@ -56,6 +57,7 @@ const App = (): React.ReactElement => (
             <Route path="produtos" element={<Produtos />} />
             <Route path="produtos/criar" element={<ProdutoCriar />} />
             <Route path="experiencias" element={<Experiencias />} />
+            <Route path="experiencias/criar" element={<ExperienciaCriar />} />
             <Route path="experiencias/devocional" element={<ExperienciaDevocional />} />
             <Route path="vendas" element={<Vendas />} />
             <Route path="financeiro" element={<Financeiro />} />
