@@ -24,6 +24,8 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const mainItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
@@ -37,6 +39,24 @@ const mainItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro no logout",
+        description: "Ocorreu um erro ao fazer logout.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const isCollapsed = state === "collapsed";
 
@@ -92,15 +112,22 @@ export function AppSidebar() {
       <SidebarFooter className="border-t px-4 py-4 bg-gray-100" style={{ borderColor: "hsl(0 0% 15%)" }}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">A</span>
+            <span className="text-white font-semibold text-sm">
+              {user?.user_metadata?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+            </span>
           </div>
           {!isCollapsed && (
             <div className="flex-1">
-              <p className="font-medium text-gray-800 text-sm">Admin User</p>
-              <p className="text-xs text-gray-600">admin@proposito24h.com</p>
+              <p className="font-medium text-gray-800 text-sm">
+                {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário'}
+              </p>
+              <p className="text-xs text-gray-600">{user?.email}</p>
             </div>
           )}
-          <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+          <button 
+            onClick={handleSignOut}
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          >
             <LogOut className="h-4 w-4 text-gray-600 hover:text-gray-800" />
           </button>
         </div>
