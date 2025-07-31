@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -21,7 +22,8 @@ import {
   Eye,
   Palette,
   Type,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
 
 interface ProductData {
@@ -42,6 +44,14 @@ interface ProductData {
   };
   content: any;
   landingPage: any;
+}
+
+interface Experience {
+  id: string;
+  title: string;
+  description: string | null;
+  template_id: number;
+  content: any;
 }
 
 const categories = [
@@ -104,6 +114,9 @@ export default function ProdutoCriar() {
   const [gptResponse, setGptResponse] = useState("");
   const [parsedContent, setParsedContent] = useState<any>(null);
   const [currentDay, setCurrentDay] = useState(1);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoadingExperiences, setIsLoadingExperiences] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -111,12 +124,73 @@ export default function ProdutoCriar() {
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
 
+  // Fetch experiences on component mount
+  useEffect(() => {
+    fetchExperiences();
+  }, []);
+
   // Auto-generate prompt when entering step 5
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentStep === 5 && !generatedPrompt) {
       generatePrompt();
     }
   }, [currentStep, generatedPrompt]);
+
+  const fetchExperiences = async () => {
+    setIsLoadingExperiences(true);
+    try {
+      const { data, error } = await supabase
+        .from('experiences')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching experiences:', error);
+        toast({
+          title: "Erro ao carregar experiências",
+          description: "Não foi possível carregar as experiências disponíveis.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setExperiences(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erro de conexão",
+        description: "Verifique sua conexão com a internet.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingExperiences(false);
+    }
+  };
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+      .trim()
+      .replace(/\s+/g, '-'); // Substitui espaços por hífens
+  };
+
+  const checkSlugUniqueness = async (slug: string) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('slug')
+      .eq('slug', slug);
+
+    if (error) {
+      console.error('Error checking slug:', error);
+      return false;
+    }
+
+    return data.length === 0;
+  };
 
   const updateProductData = (field: string, value: any) => {
     setProductData(prev => ({ ...prev, [field]: value }));
@@ -303,13 +377,92 @@ Agora crie a experiência completa seguindo exatamente este formato!`;
     }
   };
 
-  const saveProduct = () => {
-    // Here would integrate with Supabase to save the product
-    toast({
-      title: "Produto salvo!",
-      description: "Seu produto foi criado com sucesso."
-    });
-    navigate("/admin/produtos");
+  const saveProduct = async () => {
+    if (!productData.title || !productData.description || !productData.price) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Generate and validate slug
+      let slug = generateSlug(productData.title);
+      const isSlugUnique = await checkSlugUniqueness(slug);
+      
+      if (!isSlugUnique) {
+        // Add timestamp to make it unique
+        slug = `${slug}-${Date.now()}`;
+      }
+
+      // Convert price to cents
+      const priceInCents = Math.round(parseFloat(productData.price.replace(',', '.')) * 100);
+
+      // Prepare customization data
+      const customization = {
+        template: productData.template,
+        colors: productData.colors,
+        fonts: productData.fonts,
+        landingPage: productData.landingPage
+      };
+
+      // Get current user (creator)
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Faça login para continuar.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Save product to database
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          title: productData.title,
+          description: productData.description,
+          slug: slug,
+          price: priceInCents,
+          experience_id: productData.experienceId || null,
+          creator_id: user.id,
+          customization: customization,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving product:', error);
+        toast({
+          title: "Erro ao salvar",
+          description: "Ocorreu um erro ao salvar o produto. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Produto salvo!",
+        description: `Produto "${productData.title}" criado com sucesso.`
+      });
+      
+      navigate("/admin/produtos");
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderStep1 = () => (
@@ -324,42 +477,60 @@ Agora crie a experiência completa seguindo exatamente este formato!`;
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4">
-            <Card 
-              className={`cursor-pointer transition-all duration-200 ${
-                productData.experienceId === "devocional" 
-                  ? "border-primary bg-primary/5" 
-                  : "border-border hover:border-primary/50"
-              }`}
-              onClick={() => {
-                console.log("Experiência selecionada: devocional");
-                updateProductData("experienceId", "devocional");
-                console.log("ProductData após seleção:", { ...productData, experienceId: "devocional" });
-              }}
+        {isLoadingExperiences ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Carregando experiências...</span>
+          </div>
+        ) : experiences.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Nenhuma experiência disponível no momento.</p>
+            <Button 
+              variant="outline" 
+              onClick={fetchExperiences} 
+              className="mt-4"
             >
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <Heart className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">Experiência Devocional</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Jornada espiritual com devocionais diários, passagens bíblicas e reflexões
-                    </p>
-                    <div className="flex gap-2 mt-3">
-                      <Badge variant="outline">Devocional</Badge>
-                      <Badge variant="outline">Reflexão</Badge>
-                      <Badge variant="outline">Oração</Badge>
+              Tentar novamente
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {experiences.map(experience => (
+              <Card 
+                key={experience.id}
+                className={`cursor-pointer transition-all duration-200 ${
+                  productData.experienceId === experience.id 
+                    ? "border-primary bg-primary/5" 
+                    : "border-border hover:border-primary/50"
+                }`}
+                onClick={() => {
+                  updateProductData("experienceId", experience.id);
+                }}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <Heart className="h-6 w-6 text-primary" />
                     </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{experience.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {experience.description || "Jornada espiritual com conteúdo inspirador"}
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        <Badge variant="outline">Template {experience.template_id}</Badge>
+                        <Badge variant="outline">Experiência</Badge>
+                      </div>
+                    </div>
+                    {productData.experienceId === experience.id && (
+                      <Check className="h-5 w-5 text-primary" />
+                    )}
                   </div>
-                  {productData.experienceId === "devocional" && (
-                    <Check className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
