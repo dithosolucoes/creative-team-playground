@@ -120,18 +120,24 @@ export default function Produtos() {
             Gerencie seus produtos e acompanhe performance em tempo real
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => {
-              console.log("Navegando para criar produto");
-              navigate("/admin/produtos/criar");
-            }}
-            className="gap-2 gradient-primary text-white shadow-primary"
-          >
-            <Plus className="h-4 w-4" />
-            Criar Produto
-          </Button>
-        </div>
+        
+        {/* BOTÃO CRIAR PRODUTO - FORÇADO */}
+        <Button 
+          onClick={() => {
+            console.log("CLICOU NO BOTÃO CRIAR PRODUTO!");
+            navigate("/admin/produtos/criar");
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 shadow-lg"
+          style={{ 
+            backgroundColor: '#2563eb',
+            color: 'white',
+            minWidth: '150px',
+            height: '44px'
+          }}
+        >
+          <Plus className="h-5 w-5" />
+          Criar Produto
+        </Button>
       </div>
 
       {/* Quick Stats */}
