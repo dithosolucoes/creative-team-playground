@@ -43,41 +43,41 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center p-4 font-inter">
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <div className="relative mx-auto w-16 h-16 mb-4">
-            <div className="absolute inset-0 gradient-primary rounded-2xl shadow-lg"></div>
+        <div className="text-center mb-4">
+          <div className="relative mx-auto w-12 h-12 mb-3">
+            <div className="absolute inset-0 gradient-primary rounded-xl shadow-md"></div>
             <div className="relative w-full h-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">24h</span>
+              <span className="text-lg font-bold text-white">24h</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Propósito24h</h1>
-          <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
-            Transforme sua vida em 24 horas com experiências únicas
+          <h1 className="text-2xl font-bold text-foreground mb-1">Propósito24h</h1>
+          <p className="text-muted-foreground text-xs max-w-xs mx-auto">
+            Transforme sua vida em 24 horas
           </p>
         </div>
 
         {/* Auth Card */}
-        <Card className="shadow-card border-card bg-card/95 backdrop-blur-sm">
-          <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold text-center text-card-foreground">
+        <Card className="shadow-card border-2 border-black bg-card/95 backdrop-blur-sm">
+          <CardHeader className="space-y-1 pb-3">
+            <CardTitle className="text-xl font-bold text-center text-card-foreground">
               Bem-vindo
             </CardTitle>
-            <CardDescription className="text-center text-muted-foreground">
+            <CardDescription className="text-center text-muted-foreground text-sm">
               Entre na sua conta ou crie uma nova
             </CardDescription>
           </CardHeader>
-          <CardContent className="pb-6">
-            <Tabs defaultValue="login" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 bg-secondary/50 p-1 h-11">
+          <CardContent className="pb-4">
+            <Tabs defaultValue="login" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2 bg-secondary/50 p-1 h-9">
                 <TabsTrigger 
                   value="login" 
-                  className="text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-button"
+                  className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-button"
                 >
                   Entrar
                 </TabsTrigger>
                 <TabsTrigger 
                   value="register" 
-                  className="text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-button"
+                  className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-button"
                 >
                   Criar Conta
                 </TabsTrigger>
@@ -85,48 +85,48 @@ const Login = () => {
 
               {/* Login Tab */}
               <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-5">
+                <form onSubmit={handleLogin} className="space-y-3">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email" className="text-sm font-semibold text-foreground">
+                    <Label htmlFor="login-email" className="text-xs font-semibold text-foreground">
                       Email
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="login-email"
                         type="email"
                         placeholder="seu@email.com"
                         required
-                        className="pl-10 h-12 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password" className="text-sm font-semibold text-foreground">
+                    <Label htmlFor="login-password" className="text-xs font-semibold text-foreground">
                       Senha
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="login-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         required
-                        className="pl-10 pr-10 h-12 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-xs">
                     <label className="flex items-center space-x-2 cursor-pointer">
-                      <input type="checkbox" className="rounded border-border text-primary focus:ring-primary" />
-                      <span className="text-muted-foreground">Lembrar de mim</span>
+                      <input type="checkbox" className="rounded border-border text-primary focus:ring-primary w-3 h-3" />
+                      <span className="text-muted-foreground">Lembrar</span>
                     </label>
                     <button type="button" className="text-primary hover:text-primary/80 transition-colors font-medium">
                       Esqueci a senha
@@ -134,7 +134,7 @@ const Login = () => {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full h-12 gradient-primary hover:opacity-90 text-white font-semibold transition-all duration-200 shadow-button hover:shadow-lg"
+                    className="w-full h-9 gradient-primary hover:opacity-90 text-white font-semibold transition-all duration-200 shadow-button hover:shadow-lg text-xs"
                     disabled={isLoading}
                   >
                     {isLoading ? "Entrando..." : "Entrar"}
@@ -144,100 +144,100 @@ const Login = () => {
 
               {/* Register Tab */}
               <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-5">
+                <form onSubmit={handleRegister} className="space-y-3">
                   <div className="space-y-2">
-                    <Label htmlFor="register-name" className="text-sm font-semibold text-foreground">
-                      Nome Completo
+                    <Label htmlFor="register-name" className="text-xs font-semibold text-foreground">
+                      Nome
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="register-name"
                         type="text"
-                        placeholder="Seu nome completo"
+                        placeholder="Seu nome"
                         required
-                        className="pl-10 h-12 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-email" className="text-sm font-semibold text-foreground">
+                    <Label htmlFor="register-email" className="text-xs font-semibold text-foreground">
                       Email
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="register-email"
                         type="email"
                         placeholder="seu@email.com"
                         required
-                        className="pl-10 h-12 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        className="pl-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password" className="text-sm font-semibold text-foreground">
+                    <Label htmlFor="register-password" className="text-xs font-semibold text-foreground">
                       Senha
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="register-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         required
-                        className="pl-10 pr-10 h-12 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       </button>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-confirm" className="text-sm font-semibold text-foreground">
-                      Confirmar Senha
+                    <Label htmlFor="register-confirm" className="text-xs font-semibold text-foreground">
+                      Confirmar
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                       <Input
                         id="register-confirm"
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="••••••••"
                         required
-                        className="pl-10 pr-10 h-12 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        className="pl-9 pr-9 h-9 bg-input border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showConfirmPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3 text-sm">
-                    <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <div className="text-muted-foreground leading-5">
+                  <div className="flex items-start space-x-2 text-xs">
+                    <input type="checkbox" className="rounded border-border text-primary focus:ring-primary w-3 h-3 mt-1" required />
+                    <div className="text-muted-foreground leading-4">
                       <span>Aceito os </span>
                       <button type="button" className="text-primary hover:text-primary/80 transition-colors font-medium">
-                        termos de uso
+                        termos
                       </button>
                       <span> e </span>
                       <button type="button" className="text-primary hover:text-primary/80 transition-colors font-medium">
-                        política de privacidade
+                        privacidade
                       </button>
                     </div>
                   </div>
                   <Button
                     type="submit"
-                    className="w-full h-12 gradient-primary hover:opacity-90 text-white font-semibold transition-all duration-200 shadow-button hover:shadow-lg"
+                    className="w-full h-9 gradient-primary hover:opacity-90 text-white font-semibold transition-all duration-200 shadow-button hover:shadow-lg text-xs"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Criando conta..." : "Criar Conta"}
+                    {isLoading ? "Criando..." : "Criar Conta"}
                   </Button>
                 </form>
               </TabsContent>
@@ -246,7 +246,7 @@ const Login = () => {
         </Card>
 
         {/* Footer */}
-        <div className="text-center text-xs text-muted-foreground mt-6">
+        <div className="text-center text-xs text-muted-foreground mt-3">
           <p>© 2024 Propósito24h. Todos os direitos reservados.</p>
         </div>
       </div>
