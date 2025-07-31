@@ -111,6 +111,13 @@ export default function ProdutoCriar() {
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
 
+  // Auto-generate prompt when entering step 5
+  React.useEffect(() => {
+    if (currentStep === 5 && !generatedPrompt) {
+      generatePrompt();
+    }
+  }, [currentStep, generatedPrompt]);
+
   const updateProductData = (field: string, value: any) => {
     setProductData(prev => ({ ...prev, [field]: value }));
   };
@@ -572,13 +579,6 @@ Crie agora a experiência completa seguindo exatamente este formato!`;
   };
 
   const renderStep5 = () => {
-    // Auto-generate prompt when entering step 5
-    React.useEffect(() => {
-      if (currentStep === 5 && !generatedPrompt) {
-        generatePrompt();
-      }
-    }, [currentStep]);
-
     return (
       <div className="space-y-6">
         <Card className="shadow-soft border-soft">
