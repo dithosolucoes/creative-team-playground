@@ -41,47 +41,44 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar className={`${isCollapsed ? "w-16" : "w-64"} border-r transition-all duration-300`}>
-      <SidebarHeader className="border-b px-4 py-4">
+    <Sidebar className={`${isCollapsed ? "w-16" : "w-64"} border-r transition-all duration-300`} style={{ backgroundColor: "hsl(var(--sidebar-bg))" }}>
+      <SidebarHeader className="border-b px-4 py-6" style={{ backgroundColor: "hsl(var(--sidebar-bg))", borderColor: "hsl(0 0% 15%)" }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">24h</span>
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-base">24h</span>
           </div>
           {!isCollapsed && (
             <div>
-              <h2 className="font-bold text-foreground text-lg">Propósito24h</h2>
-              <p className="text-xs text-muted-foreground">Área Admin</p>
+              <h2 className="font-bold text-white text-xl">Propósito24h</h2>
+              <p className="text-sm text-gray-300">Área Admin</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent style={{ backgroundColor: "hsl(var(--sidebar-bg))" }}>
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel className={`${isCollapsed ? "sr-only" : ""} text-gray-400 text-sm font-medium px-3 py-2`}>
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-2 px-3">
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+                        `flex items-center gap-4 px-4 py-3 rounded-xl transition-all group font-medium ${
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-button"
-                            : "hover:bg-accent text-foreground hover:text-accent-foreground"
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
                         }`
                       }
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
                       {!isCollapsed && (
-                        <>
-                          <span className="font-medium">{item.title}</span>
-                          <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </>
+                        <span className="text-sm">{item.title}</span>
                       )}
                     </NavLink>
                   </SidebarMenuButton>
@@ -92,19 +89,19 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t px-4 py-4">
+      <SidebarFooter className="border-t px-4 py-4" style={{ backgroundColor: "hsl(var(--sidebar-bg))", borderColor: "hsl(0 0% 15%)" }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-            <span className="text-secondary-foreground font-semibold text-sm">A</span>
+          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+            <span className="text-white font-semibold text-sm">A</span>
           </div>
           {!isCollapsed && (
             <div className="flex-1">
-              <p className="font-medium text-foreground text-sm">Admin User</p>
-              <p className="text-xs text-muted-foreground">admin@proposito24h.com</p>
+              <p className="font-medium text-white text-sm">Admin User</p>
+              <p className="text-xs text-gray-400">admin@proposito24h.com</p>
             </div>
           )}
-          <button className="p-1.5 hover:bg-accent rounded-lg transition-colors">
-            <LogOut className="h-4 w-4 text-muted-foreground" />
+          <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+            <LogOut className="h-4 w-4 text-gray-400 hover:text-white" />
           </button>
         </div>
       </SidebarFooter>

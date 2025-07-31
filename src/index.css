@@ -10,52 +10,34 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Arctic Flow - Premium Design System */
-    --background: 216 27% 96%;
-    --foreground: 216 19% 16%;
-
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 216 19% 16%;
-
+    --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 216 19% 16%;
-
-    --primary: 210 100% 56%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 216 12% 84%;
-    --secondary-foreground: 216 19% 27%;
-
-    --muted: 216 12% 84%;
-    --muted-foreground: 216 19% 45%;
-
-    --accent: 210 40% 92%;
-    --accent-foreground: 210 100% 40%;
-
-    --destructive: 0 84% 60%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 216 12% 84%;
-    --input: 0 0% 100%;
-    --ring: 210 100% 56%;
-
-    --radius: 0.5rem;
-
-    /* Premium gradients and effects */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 56%), hsl(210 100% 64%));
-    --gradient-bg: linear-gradient(135deg, hsl(216 27% 96%), hsl(210 40% 98%));
-    --shadow-card: 0 4px 6px -1px hsl(216 19% 16% / 0.1), 0 2px 4px -2px hsl(216 19% 16% / 0.1);
-    --shadow-button: 0 1px 2px 0 hsl(216 19% 16% / 0.05);
-    --border-card: hsl(216 19% 16% / 0.1);
-
-    --sidebar-background: 216 27% 96%;
-    --sidebar-foreground: 216 19% 27%;
-    --sidebar-primary: 210 100% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 12% 84%;
-    --sidebar-accent-foreground: 216 19% 27%;
-    --sidebar-border: 216 12% 84%;
-    --sidebar-ring: 210 100% 56%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 210 100% 50%;
+    --radius: 0.75rem;
+    
+    /* Custom black theme colors */
+    --sidebar-bg: 0 0% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-active: 210 100% 50%;
+    --sidebar-active-foreground: 0 0% 98%;
+    --header-bg: 0 0% 5%;
+    --header-foreground: 0 0% 98%;
   }
 
   .dark {
