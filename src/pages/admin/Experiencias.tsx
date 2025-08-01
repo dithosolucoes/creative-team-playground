@@ -146,8 +146,11 @@ export default function Experiencias() {
   };
 
   const getDaysCount = (content: any): number => {
-    if (!content || !Array.isArray(content)) return 0;
-    return content.length;
+    if (!content) return 0;
+    if (content.daily_content && Array.isArray(content.daily_content)) {
+      return content.daily_content.length;
+    }
+    return Array.isArray(content) ? content.length : 0;
   };
 
   const getTemplateLabel = (templateId: number): string => {
