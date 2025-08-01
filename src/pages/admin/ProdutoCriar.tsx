@@ -377,6 +377,32 @@ Agora crie a experiência completa seguindo exatamente este formato!`;
     }
   };
 
+  const ensureCreatorExists = async (userId: string, userEmail: string) => {
+    // Check if creator already exists
+    const { data: existingCreator } = await supabase
+      .from('creators')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (existingCreator) {
+      return; // Creator already exists
+    }
+
+    // Create creator record
+    const { error: createError } = await supabase
+      .from('creators')
+      .insert({
+        id: userId,
+        email: userEmail,
+        name: userEmail.split('@')[0] // Use email prefix as default name
+      });
+
+    if (createError) {
+      throw new Error(`Erro ao criar registro de criador: ${createError.message}`);
+    }
+  };
+
   const saveProduct = async () => {
     if (!productData.title || !productData.description || !productData.price) {
       toast({
@@ -420,6 +446,9 @@ Agora crie a experiência completa seguindo exatamente este formato!`;
         });
         return;
       }
+
+      // Ensure creator exists before saving product
+      await ensureCreatorExists(user.id, user.email || '');
 
       // Save product to database
       const { data, error } = await supabase
