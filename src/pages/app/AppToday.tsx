@@ -171,20 +171,33 @@ export default function AppToday() {
 
   // Get current day content from experience data
   const experienceContent = experienceData?.content as any;
-  const dailyContent = experienceContent?.daily_content?.[currentDay.toString()];
+  
+  // Handle different content structures
+  let dailyContent;
+  let totalDays = 21; // default
+  
+  if (experienceContent?.days) {
+    // New format: {days: {1: {...}, 2: {...}}}
+    dailyContent = experienceContent.days[currentDay.toString()];
+    totalDays = experienceContent.totalDays || Object.keys(experienceContent.days).length;
+  } else if (experienceContent?.daily_content) {
+    // Old format: {daily_content: [...]}
+    dailyContent = experienceContent.daily_content[currentDay.toString()];
+    totalDays = experienceContent.daily_content.length;
+  }
   
   const todayContent = {
     day: currentDay,
-    title: dailyContent?.title || `Dia ${currentDay} - Reflexão Diária`,
-    verse: dailyContent?.verse || "Renovai-vos no espírito do vosso entendimento - Efésios 4:23",
-    verseRef: "Efésios 4:23",
-    reflection: dailyContent?.reflection || "Hoje é um novo dia para crescer e se transformar. Aproveite cada momento desta jornada.",
+    title: dailyContent?.titulo || dailyContent?.title || `Dia ${currentDay} - Reflexão Diária`,
+    verse: dailyContent?.passagem?.texto || dailyContent?.verse || "Renovai-vos no espírito do vosso entendimento - Efésios 4:23",
+    verseRef: dailyContent?.passagem?.referencia || dailyContent?.verseRef || "Efésios 4:23",
+    reflection: dailyContent?.devocional || dailyContent?.reflection || "Hoje é um novo dia para crescer e se transformar. Aproveite cada momento desta jornada.",
     action: dailyContent?.action || "Reflita sobre seu crescimento pessoal",
     questions: dailyContent?.questions || [
       "O que você aprendeu hoje?",
       "Como pode aplicar isso na sua vida?"
     ],
-    meditation: dailyContent?.meditation || "Dedique alguns minutos para meditar e refletir."
+    meditation: dailyContent?.oracao?.conteudo || dailyContent?.meditation || "Dedique alguns minutos para meditar e refletir."
   };
 
   const tasks = [
@@ -202,7 +215,7 @@ export default function AppToday() {
       {/* Day Header */}
       <div className="text-center space-y-2">
         <Badge className="bg-primary/10 text-primary border-primary/20">
-          Dia {todayContent.day} de {(experienceData?.content as any)?.days || 21}
+          Dia {todayContent.day} de {totalDays}
         </Badge>
         <h1 className="text-2xl font-bold text-foreground">
           {todayContent.title}
