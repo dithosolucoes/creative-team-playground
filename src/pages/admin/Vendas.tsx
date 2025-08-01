@@ -25,74 +25,6 @@ import CreateFunnelModal from "@/components/sales/CreateFunnelModal";
 import CreateCouponModal from "@/components/sales/CreateCouponModal";
 import CreateUpsellModal from "@/components/sales/CreateUpsellModal";
 
-const funnels = [
-  {
-    id: 1,
-    name: "Funil Principal - Transformação",
-    products: ["Transformação 24h", "Upsell Premium", "Downsell Light"],
-    conversion: 4.2,
-    revenue: "R$ 34.567",
-    visitors: 2847,
-    purchases: 119,
-    status: "Ativo"
-  },
-  {
-    id: 2,
-    name: "Funil Black Friday",
-    products: ["Bundle Completo", "Addon Exclusivo"],
-    conversion: 6.8,
-    revenue: "R$ 28.940",
-    visitors: 1924,
-    purchases: 131,
-    status: "Pausado"
-  }
-];
-
-const coupons = [
-  {
-    id: 1,
-    code: "TRANSFORM50",
-    discount: "50%",
-    type: "percentage",
-    uses: 247,
-    maxUses: 500,
-    revenue: "R$ 12.350",
-    expiresAt: "2024-02-15",
-    status: "Ativo"
-  },
-  {
-    id: 2,
-    code: "WELCOME20",
-    discount: "R$ 20",
-    type: "fixed",
-    uses: 89,
-    maxUses: 200,
-    revenue: "R$ 4.567",
-    expiresAt: "2024-01-31",
-    status: "Ativo"
-  }
-];
-
-const upsells = [
-  {
-    id: 1,
-    name: "Premium Upgrade",
-    conversionRate: 23.4,
-    revenue: "R$ 8.940",
-    shows: 567,
-    conversions: 133,
-    avgOrderValue: "R$ 67"
-  },
-  {
-    id: 2,
-    name: "Consultoria 1:1",
-    conversionRate: 8.7,
-    revenue: "R$ 15.678",
-    shows: 892,
-    conversions: 78,
-    avgOrderValue: "R$ 201"
-  }
-];
 
 export default function Vendas() {
   const [activeTab, setActiveTab] = useState("funnels");
@@ -341,7 +273,7 @@ export default function Vendas() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {(realFunnels.length > 0 ? realFunnels : funnels).map((funnel) => (
+            {realFunnels.length > 0 ? realFunnels.map((funnel) => (
               <Card key={funnel.id} className="shadow-soft border-soft hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -390,7 +322,23 @@ export default function Vendas() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <Card className="shadow-soft border-soft">
+                <CardContent className="p-12 text-center">
+                  <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    Nenhum funil criado
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Crie seu primeiro funil de vendas para começar a otimizar suas conversões
+                  </p>
+                  <Button onClick={() => setShowFunnelModal(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Primeiro Funil
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
@@ -492,7 +440,7 @@ export default function Vendas() {
           </div>
 
           <div className="grid gap-6">
-            {(realUpsells.length > 0 ? realUpsells : upsells).map((upsell) => (
+            {realUpsells.length > 0 ? realUpsells.map((upsell) => (
               <Card key={upsell.id} className="shadow-soft border-soft">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-6">
@@ -536,7 +484,23 @@ export default function Vendas() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <Card className="shadow-soft border-soft">
+                <CardContent className="p-12 text-center">
+                  <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    Nenhum upsell criado
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Crie seu primeiro upsell para aumentar o valor médio por compra
+                  </p>
+                  <Button onClick={() => setShowUpsellModal(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Primeiro Upsell
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
