@@ -35,6 +35,7 @@ export default function ProductCheckout() {
     confirmPassword: ""
   });
   
+  const [currentStep, setCurrentStep] = useState(1); // 1: Dados, 2: Confirmar Email, 3: Pagamento
   const [loading, setLoading] = useState(false);
 
   // Fetch product data
@@ -84,7 +85,7 @@ export default function ProductCheckout() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleStepOne = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -96,10 +97,19 @@ export default function ProductCheckout() {
       return;
     }
 
+    // Move to email confirmation step
+    setCurrentStep(2);
+  };
+
+  const handleEmailConfirmation = () => {
+    setCurrentStep(3);
+  };
+
+  const handleFinalSubmit = async () => {
     setLoading(true);
 
     try {
-      // Create user account first
+      // Create user account first - without email confirmation requirement
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -126,6 +136,17 @@ export default function ProductCheckout() {
           }
         } else {
           throw authError;
+        }
+      } else if (authData.user) {
+        // Auto-confirm the user's email to skip email confirmation
+        try {
+          await supabase.functions.invoke('confirm-user-email', {
+            body: { email: formData.email }
+          });
+          console.log("Email auto-confirmed for user");
+        } catch (confirmError) {
+          console.warn("Could not auto-confirm email:", confirmError);
+          // Don't throw - this is not critical for the checkout flow
         }
       }
 
@@ -230,146 +251,200 @@ export default function ProductCheckout() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Personal Info */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Nome Completo *</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Seu nome completo"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">E-mail *</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="seu@email.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="cpf">CPF *</Label>
-                      <Input
-                        id="cpf"
-                        name="cpf"
-                        value={formData.cpf}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="000.000.000-00"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Telefone *</Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="(11) 99999-9999"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Account Creation */}
-                  <Separator />
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Criar Conta no App
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Esta senha será usada para acessar seu conteúdo no app
-                    </p>
-                    
+{currentStep === 1 && (
+                  <form onSubmit={handleStepOne} className="space-y-6">
+                    {/* Personal Info */}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="password">Senha *</Label>
+                        <Label htmlFor="name">Nome Completo *</Label>
                         <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          value={formData.password}
+                          id="name"
+                          name="name"
+                          value={formData.name}
                           onChange={handleInputChange}
                           required
-                          placeholder="Mínimo 6 caracteres"
+                          placeholder="Seu nome completo"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                        <Label htmlFor="email">E-mail *</Label>
                         <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          value={formData.confirmPassword}
+                          id="email"
+                          name="email"
+                          type="email"
+                          value={formData.email}
                           onChange={handleInputChange}
                           required
-                          placeholder="Confirme sua senha"
+                          placeholder="seu@email.com"
                         />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Payment Method Info */}
-                  <Separator />
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Formas de Pagamento Disponíveis
-                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="cpf">CPF *</Label>
+                        <Input
+                          id="cpf"
+                          name="cpf"
+                          value={formData.cpf}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="000.000.000-00"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Telefone *</Label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="(11) 99999-9999"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Account Creation */}
+                    <Separator />
                     
-                    <div className="grid gap-3">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        Criar Conta no App
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Esta senha será usada para acessar seu conteúdo no app
+                      </p>
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="password">Senha *</Label>
+                          <Input
+                            id="password"
+                            name="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            required
+                            placeholder="Mínimo 6 caracteres"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                          <Input
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={handleInputChange}
+                            required
+                            placeholder="Confirme sua senha"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <Button 
+                      type="submit" 
+                      className="w-full text-lg py-6"
+                    >
+                      Continuar
+                    </Button>
+                  </form>
+                )}
+
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div className="text-center space-y-4">
+                      <CheckCircle className="h-16 w-16 text-primary mx-auto" />
+                      <h3 className="text-xl font-semibold text-foreground">
+                        Confirme seu E-mail
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Verifique se seu e-mail está correto. Você receberá as instruções de acesso neste endereço:
+                      </p>
+                      
                       <Card className="border-primary bg-primary/5">
-                        <CardContent className="p-4 flex items-center gap-3">
-                          <CreditCard className="h-5 w-5 text-primary" />
-                          <div className="flex-1">
-                            <p className="font-medium text-foreground">Cartão de Crédito</p>
-                            <p className="text-sm text-muted-foreground">Aprovação imediata</p>
-                          </div>
-                          <Badge variant="secondary">Disponível</Badge>
+                        <CardContent className="p-4">
+                          <p className="text-lg font-semibold text-foreground">
+                            📧 {formData.email}
+                          </p>
                         </CardContent>
                       </Card>
                       
-                      <Card className="border-primary bg-primary/5">
-                        <CardContent className="p-4 flex items-center gap-3">
-                          <Smartphone className="h-5 w-5 text-primary" />
-                          <div className="flex-1">
-                            <p className="font-medium text-foreground">PIX</p>
-                            <p className="text-sm text-muted-foreground">Aprovação em até 2h</p>
-                          </div>
-                          <Badge variant="secondary">Disponível</Badge>
-                        </CardContent>
-                      </Card>
+                      <p className="text-sm text-muted-foreground">
+                        ⚠️ <strong>Importante:</strong> Este será o e-mail usado para fazer login no app. 
+                        Certifique-se de que está correto!
+                      </p>
                     </div>
-                    
-                    <div className="text-xs text-center text-muted-foreground space-y-1 bg-blue-50 p-3 rounded-lg">
-                      <p>✅ Pagamento com <strong>PIX</strong> ou <strong>Cartão</strong></p>
-                      <p>✅ Ambiente 100% seguro (Stripe)</p>
-                      <p>✅ Aprovação instantânea</p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setCurrentStep(1)}
+                        className="w-full"
+                      >
+                        Alterar E-mail
+                      </Button>
+                      <Button 
+                        onClick={handleEmailConfirmation}
+                        className="w-full"
+                      >
+                        E-mail Correto
+                      </Button>
                     </div>
                   </div>
+                )}
 
-                  {/* Submit Button */}
-                  <Button 
-                    type="submit" 
-                    className="w-full text-lg py-6"
-                    disabled={loading}
-                  >
-                    {loading ? "Criando conta..." : "Ir para Pagamento"}
-                  </Button>
-                </form>
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        Formas de Pagamento Disponíveis
+                      </h3>
+                      
+                      <div className="grid gap-3">
+                        <Card className="border-primary bg-primary/5">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <CreditCard className="h-5 w-5 text-primary" />
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">Cartão de Crédito</p>
+                              <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                            </div>
+                            <Badge variant="secondary">Disponível</Badge>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card className="border-primary bg-primary/5">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <Smartphone className="h-5 w-5 text-primary" />
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">PIX</p>
+                              <p className="text-sm text-muted-foreground">Aprovação em até 2h</p>
+                            </div>
+                            <Badge variant="secondary">Disponível</Badge>
+                          </CardContent>
+                        </Card>
+                      </div>
+                      
+                      <div className="text-xs text-center text-muted-foreground space-y-1 bg-blue-50 p-3 rounded-lg">
+                        <p>✅ Pagamento com <strong>PIX</strong> ou <strong>Cartão</strong></p>
+                        <p>✅ Ambiente 100% seguro (Stripe)</p>
+                        <p>✅ Aprovação instantânea</p>
+                      </div>
+                    </div>
+
+                    {/* Final Submit Button */}
+                    <Button 
+                      onClick={handleFinalSubmit}
+                      className="w-full text-lg py-6"
+                      disabled={loading}
+                    >
+                      {loading ? "Criando conta..." : "Finalizar Pagamento"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
