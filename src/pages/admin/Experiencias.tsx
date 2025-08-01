@@ -188,13 +188,23 @@ export default function Experiencias() {
             Gerencie suas experiências devocionais e conteúdos
           </p>
         </div>
-        <Button 
-          onClick={() => navigate("/admin/experiencias/criar")}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Nova Experiência
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/admin/experiencias/devocional")}
+            className="gap-2"
+          >
+            <Heart className="h-4 w-4" />
+            Experiência Original
+          </Button>
+          <Button 
+            onClick={() => navigate("/admin/experiencias/criar")}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Experiência
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
