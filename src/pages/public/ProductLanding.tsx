@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,45 +11,112 @@ import {
   CheckCircle, 
   Users,
   Calendar,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function ProductLanding() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  
+  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState<any>(null);
+  const [experience, setExperience] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock product data
-  const product = {
-    slug: "transformacao-21-dias",
-    title: "Transformação em 21 Dias",
-    subtitle: "A jornada espiritual que vai revolucionar sua vida",
-    description: "Desperte seu potencial divino através de uma experiência devocional única e transformadora",
-    price: 97,
-    originalPrice: 197,
-    highlights: [
-      "21 dias de conteúdo exclusivo",
-      "Meditações guiadas diárias",
-      "Comunidade privada de apoio",
-      "Certificado de conclusão",
-      "Acesso vitalício"
-    ],
-    testimonials: [
-      {
-        name: "Maria Silva",
-        text: "Esta experiência mudou completamente minha perspectiva de vida. Recomendo!",
-        rating: 5
-      },
-      {
-        name: "João Santos", 
-        text: "21 dias que transformaram minha relação com Deus. Simplesmente incrível.",
-        rating: 5
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!slug) {
+        setError("Produto não encontrado");
+        setLoading(false);
+        return;
       }
-    ]
-  };
+
+      try {
+        // Buscar produto com experiência associada
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select(`
+            *,
+            experience:experiences(*)
+          `)
+          .eq('slug', slug)
+          .eq('is_active', true)
+          .single();
+
+        if (productError || !productData) {
+          setError("Produto não encontrado");
+          setLoading(false);
+          return;
+        }
+
+        setProduct(productData);
+        setExperience(productData.experience);
+        setLoading(false);
+      } catch (err) {
+        console.error('Erro ao buscar produto:', err);
+        setError("Erro ao carregar produto");
+        setLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [slug]);
 
   const handlePurchase = () => {
     navigate(`/produto/${slug}/checkout`);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Carregando produto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Produto não encontrado</h1>
+          <p className="text-muted-foreground mb-6">
+            O produto que você procura não existe ou não está mais disponível.
+          </p>
+          <Button onClick={() => navigate('/')} variant="outline">
+            Voltar ao Início
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback para highlights se não tiver na experiência
+  const highlights = experience?.content?.highlights || [
+    `${experience?.content?.totalDays || 21} dias de conteúdo exclusivo`,
+    "Meditações guiadas diárias",
+    "Crescimento espiritual",
+    "Acesso vitalício"
+  ];
+
+  // Testimonials mockados (podem vir do banco futuramente)
+  const testimonials = [
+    {
+      name: "Maria Silva",
+      text: "Esta experiência mudou completamente minha perspectiva de vida. Recomendo!",
+      rating: 5
+    },
+    {
+      name: "João Santos", 
+      text: "Uma jornada transformadora que me ajudou a crescer espiritualmente.",
+      rating: 5
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
@@ -73,20 +140,17 @@ export default function ProductLanding() {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-4">
-            {product.subtitle}
+            {experience?.title || product.title}
           </p>
           
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            {product.description}
+            {experience?.description || product.description}
           </p>
 
           {/* Price */}
           <div className="flex items-center justify-center gap-4 mb-8">
-            <span className="text-3xl text-muted-foreground line-through">
-              R$ {product.originalPrice}
-            </span>
             <span className="text-5xl font-bold text-primary">
-              R$ {product.price}
+              R$ {(product.price / 100).toFixed(2).replace('.', ',')}
             </span>
           </div>
 
@@ -126,7 +190,7 @@ export default function ProductLanding() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {product.highlights.map((highlight, index) => (
+            {highlights.map((highlight, index) => (
               <Card key={index} className="border-soft shadow-soft">
                 <CardContent className="p-6 flex items-center gap-4">
                   <CheckCircle className="h-6 w-6 text-success flex-shrink-0" />
@@ -146,7 +210,7 @@ export default function ProductLanding() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {product.testimonials.map((testimonial, index) => (
+            {testimonials.map((testimonial, index) => (
               <Card key={index} className="border-soft shadow-soft">
                 <CardContent className="p-6">
                   <div className="flex gap-1 mb-4">
@@ -183,7 +247,7 @@ export default function ProductLanding() {
             variant="secondary"
             className="text-lg px-8 py-6"
           >
-            Garantir Minha Vaga - R$ {product.price}
+            Garantir Minha Vaga - R$ {(product.price / 100).toFixed(2).replace('.', ',')}
             <Heart className="ml-2 h-5 w-5" />
           </Button>
         </div>
