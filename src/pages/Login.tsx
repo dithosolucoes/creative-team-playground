@@ -18,12 +18,28 @@ const Login = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  // Check if user is already logged in
+  // Check if user is already logged in and redirect based on user type
   useEffect(() => {
     if (!loading && user) {
-      navigate("/admin/dashboard");
+      checkUserTypeAndRedirect();
     }
   }, [user, loading, navigate]);
+
+  const checkUserTypeAndRedirect = async () => {
+    if (!user) return;
+    
+    const { data: creatorData } = await supabase
+      .from('creators')
+      .select('id')
+      .eq('email', user.email)
+      .single();
+
+    if (creatorData) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/app/hoje');
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +58,29 @@ const Login = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao Propósito24h",
-      });
-      
-      navigate("/admin/dashboard");
+      // Verificar se é admin ou leitor
+      const { data: creatorData } = await supabase
+        .from('creators')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (creatorData) {
+        // É um admin/criador
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para área administrativa...",
+        });
+        navigate("/admin/dashboard");
+      } else {
+        // É um leitor/usuário final
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o app...",
+        });
+        // Por enquanto redirecionando para um produto padrão, depois será dinâmico
+        navigate("/app/hoje");
+      }
     } catch (error: any) {
       // Se for problema de credenciais e o email for do usuário teste, resetar senha
       if (error.message.includes('Invalid login credentials') && email === 'tgabriel3246@gmail.com') {

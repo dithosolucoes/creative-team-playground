@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -17,10 +18,27 @@ export const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteP
       if (requireAuth && !user) {
         navigate('/login');
       } else if (!requireAuth && user) {
-        navigate('/admin/dashboard');
+        // Verificar se é admin ou leitor e redirecionar adequadamente
+        checkUserTypeAndRedirect();
       }
     }
   }, [user, loading, requireAuth, navigate]);
+
+  const checkUserTypeAndRedirect = async () => {
+    if (!user) return;
+    
+    const { data: creatorData } = await supabase
+      .from('creators')
+      .select('id')
+      .eq('email', user.email)
+      .single();
+
+    if (creatorData) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/app/hoje');
+    }
+  };
 
   if (loading) {
     return (
