@@ -42,14 +42,23 @@ export default function AppToday() {
     try {
       setLoading(true);
 
-      // First, get user's active product
+      // First, get user's active product with the product's own content
       const { data: purchases, error: purchasesError } = await supabase
         .from('purchases')
         .select(`
           *,
           products(
-            *,
-            experiences(*)
+            id,
+            title,
+            description,
+            slug,
+            customization,
+            experience_id,
+            experiences(
+              id,
+              title,
+              content
+            )
           )
         `)
         .eq('user_id', user.id)
@@ -69,7 +78,8 @@ export default function AppToday() {
       }
 
       const userProduct = purchases[0];
-      const experience = userProduct.products.experiences;
+      const product = userProduct.products;
+      const experience = product.experiences;
 
       // Get user progress for this product
       const { data: progress, error: progressError } = await supabase
@@ -84,10 +94,14 @@ export default function AppToday() {
 
       const lastCompletedDay = progress && progress.length > 0 ? progress[0].day_number : 0;
       const experienceContent = experience?.content as any;
-      const nextDay = Math.min(lastCompletedDay + 1, experienceContent?.days || 21);
+      const totalExperienceDays = experienceContent?.totalDays || (experienceContent?.days ? Object.keys(experienceContent.days).length : 21);
+      const nextDay = Math.min(lastCompletedDay + 1, totalExperienceDays);
 
       setCurrentDay(nextDay);
-      setExperienceData(experience);
+      setExperienceData({ 
+        ...experience, 
+        productInfo: product // Add product info to show correct title
+      });
       setUserProgress(progress && progress.length > 0 ? progress[0] : null);
 
       // Check if today is already completed
@@ -218,8 +232,11 @@ export default function AppToday() {
           Dia {todayContent.day} de {totalDays}
         </Badge>
         <h1 className="text-2xl font-bold text-foreground">
-          {todayContent.title}
+          {(experienceData as any)?.productInfo?.title || todayContent.title}
         </h1>
+        <p className="text-sm text-muted-foreground">
+          {(experienceData as any)?.productInfo?.description || "Sua jornada espiritual"}
+        </p>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span>15-20 minutos</span>
