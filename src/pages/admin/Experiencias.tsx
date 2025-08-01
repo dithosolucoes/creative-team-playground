@@ -147,6 +147,10 @@ export default function Experiencias() {
 
   const getDaysCount = (content: any): number => {
     if (!content) return 0;
+    if (content.totalDays) return content.totalDays;
+    if (content.days && typeof content.days === 'object') {
+      return Object.keys(content.days).length;
+    }
     if (content.daily_content && Array.isArray(content.daily_content)) {
       return content.daily_content.length;
     }
