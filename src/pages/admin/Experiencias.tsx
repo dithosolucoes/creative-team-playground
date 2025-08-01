@@ -323,7 +323,7 @@ export default function Experiencias() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/experiencias/${experience.id}`)}
+                        onClick={() => navigate(`/admin/experiencias/devocional/${experience.id}`)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>

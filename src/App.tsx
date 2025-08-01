@@ -73,6 +73,7 @@ const App = (): React.ReactElement => (
               <Route path="experiencias/criar" element={<ExperienciaCriar />} />
               <Route path="experiencias/:id" element={<ExperienciaVisualizar />} />
               <Route path="experiencias/devocional" element={<ExperienciaDevocional />} />
+              <Route path="experiencias/devocional/:id" element={<ExperienciaDevocional />} />
               <Route path="vendas" element={<Vendas />} />
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="configuracoes" element={<Configuracoes />} />
