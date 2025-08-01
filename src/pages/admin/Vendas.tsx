@@ -20,6 +20,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import CreateFunnelModal from "@/components/sales/CreateFunnelModal";
+import CreateCouponModal from "@/components/sales/CreateCouponModal";
+import CreateUpsellModal from "@/components/sales/CreateUpsellModal";
 
 const funnels = [
   {
@@ -101,7 +105,16 @@ export default function Vendas() {
     totalSales: 0
   });
   const [realCoupons, setRealCoupons] = useState([]);
+  const [realFunnels, setRealFunnels] = useState([]);
+  const [realUpsells, setRealUpsells] = useState([]);
+  
+  // Modal states
+  const [showFunnelModal, setShowFunnelModal] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [showUpsellModal, setShowUpsellModal] = useState(false);
+  
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchSalesData();
@@ -127,10 +140,27 @@ export default function Vendas() {
 
       if (couponsError) throw couponsError;
 
+      // Fetch funnels data
+      const { data: funnels, error: funnelsError } = await supabase
+        .from('funnels')
+        .select('*')
+        .eq('creator_id', user?.id);
+
+      if (funnelsError) throw funnelsError;
+
+      // Fetch upsells data
+      const { data: upsells, error: upsellsError } = await supabase
+        .from('upsells')
+        .select('*')
+        .eq('creator_id', user?.id);
+
+      if (upsellsError) throw upsellsError;
+
       // Calculate metrics
       const totalRevenue = purchases?.reduce((sum, purchase) => sum + (purchase.amount || 0), 0) || 0;
       const totalSales = purchases?.length || 0;
       const activeCoupons = coupons?.length || 0;
+      const upsellConversion = upsells?.reduce((avg, u) => avg + (u.conversion_rate || 0), 0) / (upsells?.length || 1) || 16.1;
 
       // Format coupons for display
       const formattedCoupons = coupons?.map(coupon => ({
@@ -147,15 +177,40 @@ export default function Vendas() {
         status: "Ativo"
       })) || [];
 
+      // Format funnels for display
+      const formattedFunnels = funnels?.map(funnel => ({
+        id: funnel.id,
+        name: funnel.name,
+        products: Array.isArray(funnel.products) ? funnel.products : [],
+        conversion: funnel.conversion_rate || 0,
+        revenue: `R$ ${((funnel.total_revenue || 0) / 100).toFixed(0)}`,
+        visitors: funnel.total_visitors || 0,
+        purchases: funnel.total_purchases || 0,
+        status: funnel.status === 'active' ? 'Ativo' : 'Pausado'
+      })) || [];
+
+      // Format upsells for display
+      const formattedUpsells = upsells?.map(upsell => ({
+        id: upsell.id,
+        name: upsell.name,
+        conversionRate: upsell.conversion_rate || 0,
+        revenue: `R$ ${((upsell.total_revenue || 0) / 100).toFixed(0)}`,
+        shows: upsell.total_shows || 0,
+        conversions: upsell.total_conversions || 0,
+        avgOrderValue: `R$ ${((upsell.average_order_value || 0) / 100).toFixed(0)}`
+      })) || [];
+
       setSalesData({
         totalRevenue: totalRevenue / 100, // Convert from cents
         conversionRate: totalSales > 0 ? ((totalSales / (totalSales * 25)) * 100) : 4.8, // Mock conversion rate
         activeCoupons,
-        upsellConversion: 16.1, // Mock data
+        upsellConversion,
         totalSales
       });
 
       setRealCoupons(formattedCoupons);
+      setRealFunnels(formattedFunnels);
+      setRealUpsells(formattedUpsells);
 
     } catch (error) {
       console.error('Error fetching sales data:', error);
@@ -190,7 +245,10 @@ export default function Vendas() {
             Sistema avançado de vendas, funis e otimização de conversão
           </p>
         </div>
-        <Button className="gap-2 gradient-primary text-white shadow-primary">
+        <Button 
+          className="gap-2 gradient-primary text-white shadow-primary"
+          onClick={() => setShowFunnelModal(true)}
+        >
           <Plus className="h-4 w-4" />
           Criar Funil
         </Button>
@@ -272,14 +330,18 @@ export default function Vendas() {
         <TabsContent value="funnels" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-foreground">Funis de Vendas</h2>
-            <Button variant="outline" className="gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => setShowFunnelModal(true)}
+            >
               <Plus className="h-4 w-4" />
               Novo Funil
             </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {funnels.map((funnel) => (
+            {(realFunnels.length > 0 ? realFunnels : funnels).map((funnel) => (
               <Card key={funnel.id} className="shadow-soft border-soft hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -336,7 +398,11 @@ export default function Vendas() {
         <TabsContent value="coupons" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-foreground">Cupons de Desconto</h2>
-            <Button variant="outline" className="gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => setShowCouponModal(true)}
+            >
               <Plus className="h-4 w-4" />
               Criar Cupom
             </Button>
@@ -415,14 +481,18 @@ export default function Vendas() {
         <TabsContent value="upsells" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-foreground">Upsells & Order Bumps</h2>
-            <Button variant="outline" className="gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => setShowUpsellModal(true)}
+            >
               <Plus className="h-4 w-4" />
               Criar Upsell
             </Button>
           </div>
 
           <div className="grid gap-6">
-            {upsells.map((upsell) => (
+            {(realUpsells.length > 0 ? realUpsells : upsells).map((upsell) => (
               <Card key={upsell.id} className="shadow-soft border-soft">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-6">
@@ -490,6 +560,25 @@ export default function Vendas() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <CreateFunnelModal
+        open={showFunnelModal}
+        onOpenChange={setShowFunnelModal}
+        onSuccess={fetchSalesData}
+      />
+      
+      <CreateCouponModal
+        open={showCouponModal}
+        onOpenChange={setShowCouponModal}
+        onSuccess={fetchSalesData}
+      />
+      
+      <CreateUpsellModal
+        open={showUpsellModal}
+        onOpenChange={setShowUpsellModal}
+        onSuccess={fetchSalesData}
+      />
     </div>
   );
 }
