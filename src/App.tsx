@@ -16,6 +16,7 @@ import Produtos from "./pages/admin/Produtos";
 import ProdutoCriar from "./pages/admin/ProdutoCriar";
 import Experiencias from "./pages/admin/Experiencias";
 import ExperienciaDevocional from "./pages/admin/ExperienciaDevocional";
+import ExperienciaVisualizar from "./pages/admin/ExperienciaVisualizar";
 import Vendas from "./pages/admin/Vendas";
 import Financeiro from "./pages/admin/Financeiro";
 import Configuracoes from "./pages/admin/Configuracoes";
@@ -70,6 +71,7 @@ const App = (): React.ReactElement => (
               <Route path="produtos/criar" element={<ProdutoCriar />} />
               <Route path="experiencias" element={<Experiencias />} />
               <Route path="experiencias/criar" element={<ExperienciaCriar />} />
+              <Route path="experiencias/:id" element={<ExperienciaVisualizar />} />
               <Route path="experiencias/devocional" element={<ExperienciaDevocional />} />
               <Route path="vendas" element={<Vendas />} />
               <Route path="financeiro" element={<Financeiro />} />
