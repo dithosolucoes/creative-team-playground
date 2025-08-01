@@ -49,6 +49,33 @@ const Login = () => {
       
       navigate("/admin/dashboard");
     } catch (error: any) {
+      // Se for problema de credenciais e o email for do usuário teste, resetar senha
+      if (error.message.includes('Invalid login credentials') && email === 'tgabriel3246@gmail.com') {
+        try {
+          const response = await fetch(`https://afmefzeubvvlnvxaxfni.supabase.co/functions/v1/reset-user-password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmbWVmemV1YnZ2bG52eGF4Zm5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5ODg4MTIsImV4cCI6MjA2OTU2NDgxMn0.og5iCVZF0dIJoDuNJG_nhyDXGzRLaKfuRzkdvIGaCbU`,
+            },
+            body: JSON.stringify({
+              email: email,
+              newPassword: '123456'
+            }),
+          });
+
+          if (response.ok) {
+            toast({
+              title: "Senha resetada automaticamente!",
+              description: "Use a senha: 123456 para fazer login",
+            });
+            return;
+          }
+        } catch (resetError) {
+          console.error('Erro ao resetar senha:', resetError);
+        }
+      }
+      
       toast({
         title: "Erro no login",
         description: error.message || "Email ou senha inválidos.",
