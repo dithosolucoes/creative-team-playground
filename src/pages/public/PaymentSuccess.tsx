@@ -78,7 +78,7 @@ const PaymentSuccess = () => {
         // Auto redirect after 3 seconds
         setTimeout(() => {
           if (user) {
-            navigate("/app");
+            navigate("/app/hoje");
           } else {
             // If no user session, redirect to login with success message
             navigate("/login", { 
@@ -107,7 +107,7 @@ const PaymentSuccess = () => {
   }, [sessionId, productSlug, navigate, toast, searchParams]);
 
   const handleContinue = () => {
-    navigate("/app");
+    navigate("/app/hoje");
   };
 
   const handleLogin = () => {

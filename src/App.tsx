@@ -57,8 +57,12 @@ const App = (): React.ReactElement => (
             <Route path="/produto/:slug/checkout" element={<ProductCheckout />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             
-            {/* App Routes */}
-            <Route path="/app/*" element={<AppMain />} />
+            {/* App Routes - Protected */}
+            <Route path="/app/*" element={
+              <ProtectedRoute requireAuth={true}>
+                <AppMain />
+              </ProtectedRoute>
+            } />
             
             {/* Admin Routes - Protected */}
             <Route path="/admin" element={
