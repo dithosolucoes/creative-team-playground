@@ -14,6 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          revenue: number | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          revenue?: number | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          revenue?: number | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      coupon_usage: {
+        Row: {
+          coupon_id: string | null
+          created_at: string | null
+          discount_applied: number | null
+          id: string
+          purchase_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id?: string | null
+          created_at?: string | null
+          discount_applied?: number | null
+          id?: string
+          purchase_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string | null
+          created_at?: string | null
+          discount_applied?: number | null
+          id?: string
+          purchase_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code: string
@@ -123,6 +220,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      funnels: {
+        Row: {
+          conversion_rate: number | null
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          id: string
+          name: string
+          order_bumps: Json | null
+          products: Json | null
+          status: string | null
+          total_purchases: number | null
+          total_revenue: number | null
+          total_visitors: number | null
+          updated_at: string | null
+          upsells: Json | null
+        }
+        Insert: {
+          conversion_rate?: number | null
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          order_bumps?: Json | null
+          products?: Json | null
+          status?: string | null
+          total_purchases?: number | null
+          total_revenue?: number | null
+          total_visitors?: number | null
+          updated_at?: string | null
+          upsells?: Json | null
+        }
+        Update: {
+          conversion_rate?: number | null
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          order_bumps?: Json | null
+          products?: Json | null
+          status?: string | null
+          total_purchases?: number | null
+          total_revenue?: number | null
+          total_visitors?: number | null
+          updated_at?: string | null
+          upsells?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnels_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -249,6 +405,120 @@ export type Database = {
           {
             foreignKeyName: "purchases_product_id_fkey"
             columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          category: string
+          created_at: string | null
+          creator_id: string | null
+          encrypted: boolean | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          creator_id?: string | null
+          encrypted?: boolean | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          creator_id?: string | null
+          encrypted?: boolean | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settings_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upsells: {
+        Row: {
+          average_order_value: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          id: string
+          name: string
+          product_id: string | null
+          status: string | null
+          total_conversions: number | null
+          total_revenue: number | null
+          total_shows: number | null
+          updated_at: string | null
+          upsell_product_id: string | null
+        }
+        Insert: {
+          average_order_value?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          product_id?: string | null
+          status?: string | null
+          total_conversions?: number | null
+          total_revenue?: number | null
+          total_shows?: number | null
+          updated_at?: string | null
+          upsell_product_id?: string | null
+        }
+        Update: {
+          average_order_value?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          product_id?: string | null
+          status?: string | null
+          total_conversions?: number | null
+          total_revenue?: number | null
+          total_shows?: number | null
+          updated_at?: string | null
+          upsell_product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upsells_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsells_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsells_upsell_product_id_fkey"
+            columns: ["upsell_product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
