@@ -1,35 +1,65 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Heart, 
-  Play, 
+import {
+  Heart,
+  Play,
   CheckCircle,
   BookOpen,
   MessageCircle,
-  Star,
   Clock,
   Flame,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
+
+// Interfaces para definir a estrutura dos dados
+interface DailyContent {
+  day: number;
+  title?: string;
+  titulo?: string;
+  scripture?: { text?: string; reference?: string };
+  passagem?: { texto?: string; referencia?: string };
+  devotional?: string;
+  quiz?: { question: string }[];
+  questions?: string[];
+  prayer?: string;
+  oracao?: string;
+  action?: string;
+}
+
+interface ExperienceData {
+  title: string;
+  description: string;
+  content: Json;
+}
+
+// Função "Type Guard" para garantir a estrutura correta do conteúdo diário
+function isDailyContent(value: any): value is DailyContent {
+  return (
+    typeof value === "object" && value !== null && typeof value.day === "number"
+  );
+}
 
 export default function AppToday() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [currentDay, setCurrentDay] = useState(1);
+  const [productId, setProductId] = useState<string | null>(null);
   const [completedToday, setCompletedToday] = useState(false);
-  const [userProgress, setUserProgress] = useState(null);
-  const [experienceData, setExperienceData] = useState(null);
+  const [experienceData, setExperienceData] = useState<ExperienceData | null>(
+    null
+  );
   const [reflections, setReflections] = useState({
     question1: "",
-    question2: ""
+    question2: "",
   });
 
   useEffect(() => {
@@ -42,78 +72,68 @@ export default function AppToday() {
     try {
       setLoading(true);
 
-      // First, get user's active product with the product's own content
-      const { data: purchases, error: purchasesError } = await supabase
-        .from('purchases')
-        .select(`
-          *,
-          products(
-            id,
-            title,
-            description,
-            slug,
-            customization,
-            experience_id,
-            experiences(
-              id,
-              title,
-              content
-            )
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
-        .limit(1);
+      const { data: purchase, error: purchaseError } = await supabase
+        .from("purchases")
+        .select(
+          `
+          products!inner( id, title, description, content, experiences( id, title, content ) )
+        `
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-      if (purchasesError) throw purchasesError;
+      if (purchaseError) throw purchaseError;
 
-      if (!purchases || purchases.length === 0) {
-        toast({
-          title: "Nenhuma experiência encontrada",
-          description: "Você ainda não possui nenhuma experiência ativa.",
-          variant: "destructive"
-        });
+      const product = purchase.products as any;
+      const experience = product.experiences as any;
+      const definitiveContent = product.content || experience?.content;
+
+      if (!definitiveContent) {
+        toast({ title: "Conteúdo não encontrado", variant: "destructive" });
         return;
       }
 
-      const userProduct = purchases[0];
-      const product = userProduct.products;
-      const experience = product.experiences;
+      setProductId(product.id); // Armazena o ID do produto para uso posterior
 
-      // Get user progress for this product
       const { data: progress, error: progressError } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('product_id', userProduct.product_id)
-        .order('day_number', { ascending: false })
-        .limit(1);
+        .from("user_progress")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("product_id", product.id)
+        .order("day_number", { ascending: false });
 
       if (progressError) throw progressError;
 
-      const lastCompletedDay = progress && progress.length > 0 ? progress[0].day_number : 0;
-      const experienceContent = experience?.content as any;
-      const totalExperienceDays = experienceContent?.totalDays || (experienceContent?.days ? Object.keys(experienceContent.days).length : 21);
-      const nextDay = Math.min(lastCompletedDay + 1, totalExperienceDays);
+      const lastCompletedDay =
+        progress && progress.length > 0
+          ? Math.max(...progress.map((p) => p.day_number))
+          : 0;
+      let totalDays = 21;
+      if (Array.isArray(definitiveContent)) {
+        totalDays = definitiveContent.length;
+      }
 
+      const nextDay = Math.min(lastCompletedDay + 1, totalDays);
       setCurrentDay(nextDay);
-      setExperienceData({ 
-        ...experience, 
-        productInfo: product // Add product info to show correct title
+
+      setExperienceData({
+        title: product.title,
+        description: product.description,
+        content: definitiveContent,
       });
-      setUserProgress(progress && progress.length > 0 ? progress[0] : null);
 
-      // Check if today is already completed
-      const todayProgress = progress?.find(p => p.day_number === nextDay && p.completed);
-      setCompletedToday(!!todayProgress);
-
-    } catch (error) {
-      console.error('Error fetching user progress:', error);
+      const todayProgress = progress?.find(
+        (p: any) => p.day_number === nextDay
+      );
+      setCompletedToday(!!todayProgress?.completed);
+    } catch (error: any) {
+      console.error("Erro ao buscar progresso:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar sua experiência.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -121,42 +141,43 @@ export default function AppToday() {
   };
 
   const handleSaveProgress = async () => {
-    try {
-      if (!user || !experienceData) return;
-
-      const { data: purchases } = await supabase
-        .from('purchases')
-        .select('product_id')
-        .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .limit(1);
-
-      if (!purchases || purchases.length === 0) return;
-
-      await supabase.from('user_progress').upsert({
-        user_id: user.id,
-        product_id: purchases[0].product_id,
-        day_number: currentDay,
-        completed: true,
-        data: {
-          reflections: reflections,
-          completed_at: new Date().toISOString()
-        },
-        completed_at: new Date().toISOString()
+    if (!user || !productId) {
+      toast({
+        title: "Erro",
+        description: "Usuário ou produto não identificado.",
+        variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("user_progress").upsert(
+        {
+          user_id: user.id,
+          product_id: productId,
+          day_number: currentDay,
+          completed: true,
+          data: {
+            reflections: reflections,
+            completed_at: new Date().toISOString(),
+          },
+        },
+        { onConflict: "user_id, product_id, day_number" }
+      );
+
+      if (error) throw error;
 
       setCompletedToday(true);
       toast({
         title: "Progresso salvo!",
         description: "Parabéns por completar mais um dia da sua jornada!",
       });
-
-    } catch (error) {
-      console.error('Error saving progress:', error);
+    } catch (error: any) {
+      console.error("Erro ao salvar progresso:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar seu progresso.",
-        variant: "destructive"
+        description: "Não foi possível salvar seu progresso. Tente novamente.",
+        variant: "destructive",
       });
     }
   };
@@ -177,51 +198,61 @@ export default function AppToday() {
       <div className="container mx-auto px-4 py-6 text-center">
         <h2 className="text-xl font-bold mb-4">Nenhuma experiência ativa</h2>
         <p className="text-muted-foreground">
-          Você ainda não possui nenhuma experiência ativa. Adquira uma experiência para começar sua jornada!
+          Você ainda não possui nenhuma experiência ativa. Adquira uma
+          experiência para começar sua jornada!
         </p>
       </div>
     );
   }
 
-  // Get current day content from experience data
-  const experienceContent = experienceData?.content as any;
-  
-  // Handle different content structures
-  let dailyContent;
-  let totalDays = 21; // default
-  
-  if (experienceContent?.days) {
-    // New format: {days: {1: {...}, 2: {...}}}
-    dailyContent = experienceContent.days[currentDay.toString()];
-    totalDays = experienceContent.totalDays || Object.keys(experienceContent.days).length;
-  } else if (experienceContent?.daily_content) {
-    // Old format: {daily_content: [...]}
-    dailyContent = experienceContent.daily_content[currentDay.toString()];
-    totalDays = experienceContent.daily_content.length;
+  const mainContent = experienceData.content;
+  let dailyContent: DailyContent | null = null;
+  let totalDays = 21;
+
+  if (Array.isArray(mainContent)) {
+    const foundDay = mainContent.find(
+      (item) => isDailyContent(item) && item.day === currentDay
+    );
+    dailyContent = (foundDay || null) as any;
+    totalDays = mainContent.length > 0 ? mainContent.length : 21;
   }
-  
+
   const todayContent = {
     day: currentDay,
-    title: dailyContent?.titulo || dailyContent?.title || `Dia ${currentDay} - Reflexão Diária`,
-    verse: dailyContent?.passagem?.texto || dailyContent?.verse || "Renovai-vos no espírito do vosso entendimento - Efésios 4:23",
-    verseRef: dailyContent?.passagem?.referencia || dailyContent?.verseRef || "Efésios 4:23",
-    reflection: dailyContent?.devocional || dailyContent?.reflection || "Hoje é um novo dia para crescer e se transformar. Aproveite cada momento desta jornada.",
+    title: dailyContent?.title || dailyContent?.titulo || `Dia ${currentDay}`,
+    verse:
+      dailyContent?.scripture?.text ||
+      dailyContent?.passagem?.texto ||
+      "Versículo não encontrado.",
+    verseRef:
+      dailyContent?.scripture?.reference ||
+      dailyContent?.passagem?.referencia ||
+      "",
+    reflection: dailyContent?.devotional || "Reflexão não encontrada.",
     action: dailyContent?.action || "Reflita sobre seu crescimento pessoal",
-    questions: dailyContent?.questions || [
-      "O que você aprendeu hoje?",
-      "Como pode aplicar isso na sua vida?"
-    ],
-    meditation: dailyContent?.oracao?.conteudo || dailyContent?.meditation || "Dedique alguns minutos para meditar e refletir."
+    questions: dailyContent?.quiz?.map((q) => q.question) ||
+      dailyContent?.questions || [
+        "O que você aprendeu hoje?",
+        "Como pode aplicar isso na sua vida?",
+      ],
+    meditation:
+      dailyContent?.prayer ||
+      dailyContent?.oracao ||
+      "Dedique alguns minutos para meditar e refletir.",
   };
 
   const tasks = [
     { id: 1, title: "Leia a reflexão", completed: true },
-    { id: 2, title: "Faça a meditação guiada", completed: false },
-    { id: 3, title: "Responda as perguntas", completed: reflections.question1 && reflections.question2 },
-    { id: 4, title: "Complete a ação do dia", completed: false }
+    { id: 2, title: "Faça a meditação guiada", completed: false }, // Esta lógica pode ser implementada depois
+    {
+      id: 3,
+      title: "Responda as perguntas",
+      completed: !!(reflections.question1 && reflections.question2),
+    },
+    { id: 4, title: "Complete a ação do dia", completed: false }, // Esta lógica pode ser implementada depois
   ];
 
-  const completedTasks = tasks.filter(task => task.completed).length;
+  const completedTasks = tasks.filter((task) => task.completed).length;
   const progressPercentage = (completedTasks / tasks.length) * 100;
 
   return (
@@ -232,10 +263,10 @@ export default function AppToday() {
           Dia {todayContent.day} de {totalDays}
         </Badge>
         <h1 className="text-2xl font-bold text-foreground">
-          {(experienceData as any)?.productInfo?.title || todayContent.title}
+          {experienceData.title}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {(experienceData as any)?.productInfo?.description || "Sua jornada espiritual"}
+          {experienceData.description}
         </p>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
@@ -247,7 +278,9 @@ export default function AppToday() {
       <Card className="border-soft shadow-soft">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-foreground">Progresso de Hoje</span>
+            <span className="text-sm font-medium text-foreground">
+              Progresso de Hoje
+            </span>
             <span className="text-sm text-muted-foreground">
               {completedTasks}/{tasks.length}
             </span>
@@ -327,11 +360,15 @@ export default function AppToday() {
             <Textarea
               placeholder="Escreva sua reflexão..."
               value={reflections.question1}
-              onChange={(e) => setReflections(prev => ({...prev, question1: e.target.value}))}
+              onChange={(e) =>
+                setReflections((prev) => ({
+                  ...prev,
+                  question1: e.target.value,
+                }))
+              }
               className="min-h-20"
             />
           </div>
-          
           <div className="space-y-2">
             <p className="font-medium text-foreground">
               {todayContent.questions[1]}
@@ -339,7 +376,12 @@ export default function AppToday() {
             <Textarea
               placeholder="Escreva sua reflexão..."
               value={reflections.question2}
-              onChange={(e) => setReflections(prev => ({...prev, question2: e.target.value}))}
+              onChange={(e) =>
+                setReflections((prev) => ({
+                  ...prev,
+                  question2: e.target.value,
+                }))
+              }
               className="min-h-20"
             />
           </div>
@@ -350,10 +392,10 @@ export default function AppToday() {
       <Card className="border-soft shadow-soft">
         <CardContent className="p-6">
           {!completedToday ? (
-            <Button 
+            <Button
               onClick={handleSaveProgress}
               className="w-full text-lg py-6 bg-primary hover:bg-primary/90"
-              disabled={progressPercentage < 75}
+              disabled={progressPercentage < 75} // Desabilita o botão se as tarefas não estiverem completas
             >
               <CheckCircle className="h-5 w-5 mr-2" />
               Marcar Dia Como Completo
