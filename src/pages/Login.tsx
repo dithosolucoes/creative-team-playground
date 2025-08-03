@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, CheckCircle, Database } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +15,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [showUsersModal, setShowUsersModal] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -23,7 +26,24 @@ const Login = () => {
     if (!loading && user) {
       checkUserTypeAndRedirect();
     }
+    fetchAvailableUsers();
   }, [user, loading, navigate]);
+
+  const fetchAvailableUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, name, created_at')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (!error && data) {
+        setAvailableUsers(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+    }
+  };
 
   const checkUserTypeAndRedirect = async () => {
     if (!user) return;
@@ -197,6 +217,39 @@ const Login = () => {
           <p className="text-muted-foreground text-xs max-w-xs mx-auto">
             Transforme sua vida em 24 horas
           </p>
+        </div>
+
+        {/* Debug Button */}
+        <div className="text-center mb-4">
+          <Dialog open={showUsersModal} onOpenChange={setShowUsersModal}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs">
+                <Database className="w-3 h-3 mr-2" />
+                Ver Logins Disponíveis
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Logins Disponíveis (Debug)</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {availableUsers.map((user, index) => (
+                  <div key={index} className="p-2 border rounded bg-muted/50">
+                    <div className="font-medium text-sm">{user.email}</div>
+                    {user.name && <div className="text-xs text-muted-foreground">{user.name}</div>}
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                    </div>
+                  </div>
+                ))}
+                {availableUsers.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-4">
+                    Nenhum usuário encontrado
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Auth Card */}
